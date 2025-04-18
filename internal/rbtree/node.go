@@ -1,42 +1,62 @@
 package rbtree
 
+import (
+	"cmp"
+	"fmt"
+	"strings"
+)
+
 type color bool
 
 const (
 	black, red color = false, true
 )
 
-type node struct {
-	value               float64
-	parent, left, right *node
+type node[T cmp.Ordered] struct {
+	value               T
+	parent, left, right *node[T]
 	color               color
 }
 
-func (n *node) setLeft(l *node) {
+func (n *node[T]) setLeft(l *node[T]) {
+	if n == nil {
+		return
+	}
+
 	n.left = l
-	l.parent = n
+
+	if l != nil {
+		l.parent = n
+	}
 }
 
-func (n *node) setRight(r *node) {
+func (n *node[T]) setRight(r *node[T]) {
+	if n == nil {
+		return
+	}
+
 	n.right = r
-	r.parent = n
+
+	if r != nil {
+		r.parent = n
+	}
 }
 
-func (n *node) safeColor() color {
+func (n *node[T]) safeColor() color {
 	if n == nil {
 		return black
 	}
 	return n.color
 }
 
-func (n *node) grandparent() *node {
+func (n *node[T]) grandparent() *node[T] {
 	if n == nil || n.parent == nil {
 		return nil
 	}
 	return n.parent.parent
 }
 
-func (n *node) sibling() *node {
+func (n *node[T]) sibling() *node[T] {
 	if n == nil || n.parent == nil {
 		return nil
 	}
@@ -46,10 +66,41 @@ func (n *node) sibling() *node {
 	return n.parent.left
 }
 
-func (n *node) grandparent_uncle() (*node, *node) {
+func (n *node[T]) grandparent_uncle() (*node[T], *node[T]) {
 	g := n.grandparent()
 	if g == nil {
 		return nil, nil
 	}
 	return g, n.parent.sibling()
+}
+
+func (n *node[T]) String() string {
+	var sb strings.Builder
+	printHelper(n, 0, &sb)
+	return sb.String()
+}
+
+func printHelper[T cmp.Ordered](n *node[T], level int, sb *strings.Builder) {
+	if n == nil {
+		sb.WriteString("<empty>")
+		return
+	}
+
+	if n.left != nil {
+		printHelper(n.left, level+1, sb)
+	}
+
+	for i := 0; i < level; i++ {
+		sb.WriteString("   ")
+	}
+
+	if n.color == black {
+		sb.WriteString(fmt.Sprintf(" %v \n", n.value))
+	} else {
+		sb.WriteString(fmt.Sprintf("<%v>\n", n.value))
+	}
+
+	if n.right != nil {
+		printHelper(n.right, level+1, sb)
+	}
 }

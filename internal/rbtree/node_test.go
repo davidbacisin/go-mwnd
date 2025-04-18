@@ -9,7 +9,7 @@ import (
 func Test_node_safeColor(t *testing.T) {
 	cases := []struct {
 		name     string
-		node     *node
+		node     *node[int]
 		expected color
 	}{
 		{
@@ -19,12 +19,12 @@ func Test_node_safeColor(t *testing.T) {
 		},
 		{
 			name:     "black node",
-			node:     &node{color: black},
+			node:     &node[int]{color: black},
 			expected: black,
 		},
 		{
 			name:     "red node",
-			node:     &node{color: red},
+			node:     &node[int]{color: red},
 			expected: red,
 		},
 	}
@@ -39,13 +39,13 @@ func Test_node_safeColor(t *testing.T) {
 }
 
 func Test_node_relationships(t *testing.T) {
-	root := &node{value: 0}
-	left := &node{value: 1}
-	left_left := &node{value: 2}
-	left_right := &node{value: 3}
-	right := &node{value: 4}
-	right_left := &node{value: 5}
-	right_right := &node{value: 6}
+	root := &node[int]{value: 0}
+	left := &node[int]{value: 1}
+	left_left := &node[int]{value: 2}
+	left_right := &node[int]{value: 3}
+	right := &node[int]{value: 4}
+	right_left := &node[int]{value: 5}
+	right_right := &node[int]{value: 6}
 
 	// Link the nodes
 	root.setLeft(left)
@@ -57,10 +57,10 @@ func Test_node_relationships(t *testing.T) {
 
 	cases := []struct {
 		name        string
-		n           *node
-		grandparent *node
-		uncle       *node
-		sibling     *node
+		n           *node[int]
+		grandparent *node[int]
+		uncle       *node[int]
+		sibling     *node[int]
 	}{
 		{
 			name:        "nil",
@@ -130,4 +130,24 @@ func Test_node_relationships(t *testing.T) {
 			assert.Equal(t, c.sibling, sibling)
 		})
 	}
+}
+
+func Test_node_String(t *testing.T) {
+	root := &node[int]{value: 0}
+	left := &node[int]{value: 1}
+	left_left := &node[int]{value: 2}
+	left_right := &node[int]{value: 3}
+	right := &node[int]{value: 4}
+	right_left := &node[int]{value: 5}
+	right_right := &node[int]{value: 6}
+
+	// Link the nodes
+	root.setLeft(left)
+	left.setLeft(left_left)
+	left.setRight(left_right)
+	root.setRight(right)
+	right.setLeft(right_left)
+	right.setRight(right_right)
+
+	assert.Equal(t, "       2 \n    1 \n       3 \n 0 \n       5 \n    4 \n       6 \n", root.String())
 }
