@@ -123,6 +123,52 @@ func (t *tree[T]) replace(old, new *node[T]) {
 	}
 }
 
+func (t *tree[T]) swap(a, b *node[T]) {
+	if a == b || a == nil || b == nil {
+		return
+	}
+
+	if b.parent == a || b.parent == nil {
+		// Swap to reduce number of conditions
+		a, b = b, a
+	}
+
+	a.color, b.color = b.color, a.color
+	aParent, aLeft, aRight := a.parent, a.left, a.right
+	bParent, bLeft, bRight := b.parent, b.left, b.right
+
+	var aWasLeft, bWasLeft bool
+	if aParent != nil && aParent.left == a {
+		aWasLeft = true
+	}
+
+	if bParent != nil && bParent.left == b {
+		bWasLeft = true
+	}
+
+	a.setLeft(bLeft)
+	a.setRight(bRight)
+	b.setLeft(aLeft)
+	b.setRight(aRight)
+
+	if aParent == b {
+		t.replace(b, a)
+		if aWasLeft {
+			a.setLeft(b)
+		} else {
+			a.setRight(b)
+		}
+		return
+	}
+
+	t.replace(a, b)
+	if bWasLeft {
+		bParent.setLeft(a)
+	} else {
+		bParent.setRight(a)
+	}
+}
+
 func (t *tree[T]) rotateLeft(n *node[T]) {
 	r := n.right
 	t.replace(n, r)
@@ -138,6 +184,49 @@ func (t *tree[T]) rotateRight(n *node[T]) {
 }
 
 func (t *tree[T]) delete(n *node[T]) {
+	if n == nil {
+		return
+	}
+
+	orig := n
+	t.size--
+
+	if n.left != nil && n.right != nil {
+		// Find the immediate predecessor
+		pred := n.left
+		for pred.right != nil {
+			pred = pred.right
+		}
+
+		// Swap places with the in-order predecessor
+		t.swap(n, pred)
+	}
+
+	// Invariant: n.left, n.right, or both are nil
+	child := n.left
+	if child == nil {
+		child = n.right
+	}
+
+	if n.color == black {
+		n.color = child.safeColor()
+		t.rebalanceForDelete(n)
+	}
+
+	t.replace(n, child)
+
+	// root should be black
+	if n.parent == nil && child != nil {
+		child.color = black
+	}
+
+	// Remove the node completely from the tree
+	orig.parent = nil
+	orig.left = nil
+	orig.right = nil
+}
+
+func (t *tree[T]) rebalanceForDelete(n *node[T]) {
 	p := n.parent
 	// Case 1
 	if p == nil {
@@ -147,27 +236,33 @@ func (t *tree[T]) delete(n *node[T]) {
 	// Case 2
 	s := n.sibling()
 	if s.safeColor() == red {
-		n.parent.color = red
+		p.color = red
 		s.color = black
-		if n == n.parent.left {
+		if n == p.left {
 			t.rotateLeft(p)
 		} else {
 			t.rotateRight(p)
 		}
+
+		// Reassign p and s after rotation
+		p = n.parent
+		s = n.sibling()
 	}
 
 	// Case 3
 	if p.color == black &&
+		s != nil &&
 		s.safeColor() == black &&
 		s.left.safeColor() == black &&
 		s.right.safeColor() == black {
 		s.color = red
-		t.delete(p)
+		t.rebalanceForDelete(p)
 		return
 	}
 
 	// Case 4
 	if p.safeColor() == red &&
+		s != nil &&
 		s.safeColor() == black &&
 		s.left.safeColor() == black &&
 		s.right.safeColor() == black {
@@ -178,6 +273,7 @@ func (t *tree[T]) delete(n *node[T]) {
 
 	// Case 5
 	if n == p.left &&
+		s != nil &&
 		s.safeColor() == black &&
 		s.left.safeColor() == red &&
 		s.right.safeColor() == black {
@@ -185,6 +281,7 @@ func (t *tree[T]) delete(n *node[T]) {
 		s.left.color = black
 		t.rotateRight(s)
 	} else if n == p.right &&
+		s != nil &&
 		s.safeColor() == black &&
 		s.right.safeColor() == red &&
 		s.left.safeColor() == black {
@@ -194,6 +291,8 @@ func (t *tree[T]) delete(n *node[T]) {
 	}
 
 	// Case 6
+	p = n.parent
+	s = n.sibling()
 	s.color = p.color
 	p.color = black
 	if n == p.left && s.right.safeColor() == red {

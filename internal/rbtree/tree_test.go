@@ -148,3 +148,288 @@ func Test_tree_Insert(t *testing.T) {
 		assertRedBlackProperties(t, tr)
 	})
 }
+
+func Test_tree_swap(t *testing.T) {
+	t.Run("nil and nil", func(t *testing.T) {
+		tr := New[int](10)
+		tr.swap(nil, nil)
+		assert.Equal(t, 0, tr.Size())
+	})
+
+	t.Run("root with itself", func(t *testing.T) {
+		tr := New[int](10)
+		tr.root = &node[int]{value: 1}
+		tr.swap(tr.root, tr.root)
+		assert.Equal(t, 1, tr.root.value)
+	})
+
+	t.Run("root with nil", func(t *testing.T) {
+		tr := New[int](10)
+		tr.root = &node[int]{value: 1}
+		tr.swap(tr.root, nil)
+		assert.Equal(t, 1, tr.root.value)
+	})
+
+	t.Run("root with left", func(t *testing.T) {
+		tr := New[int](10)
+		n1 := &node[int]{value: 1}
+		n2 := &node[int]{value: 2}
+		n3 := &node[int]{value: 3}
+		n4 := &node[int]{value: 4}
+		n5 := &node[int]{value: 5}
+		tr.root = n4
+		n4.setLeft(n2)
+		n4.setRight(n5)
+		n2.setLeft(n1)
+		n2.setRight(n3)
+
+		tr.swap(tr.root, tr.root.left)
+		assert.Equal(t, n2, tr.root)
+		assert.Equal(t, n4, tr.root.left)
+		assert.Equal(t, n1, tr.root.left.left)
+		assert.Equal(t, n3, tr.root.left.right)
+		assert.Equal(t, n5, tr.root.right)
+	})
+
+	t.Run("root with right", func(t *testing.T) {
+		tr := New[int](10)
+		n1 := &node[int]{value: 1}
+		n2 := &node[int]{value: 2}
+		n3 := &node[int]{value: 3}
+		n4 := &node[int]{value: 4}
+		n5 := &node[int]{value: 5}
+		tr.root = n2
+		n2.setLeft(n1)
+		n2.setRight(n4)
+		n4.setLeft(n3)
+		n4.setRight(n5)
+
+		tr.swap(tr.root, tr.root.right)
+		assert.Equal(t, n4, tr.root)
+		assert.Equal(t, n1, tr.root.left)
+		assert.Equal(t, n2, tr.root.right)
+		assert.Equal(t, n3, tr.root.right.left)
+		assert.Equal(t, n5, tr.root.right.right)
+	})
+
+	t.Run("root with left left", func(t *testing.T) {
+		tr := New[int](10)
+		n1 := &node[int]{value: 1}
+		n2 := &node[int]{value: 2}
+		n3 := &node[int]{value: 3}
+		n4 := &node[int]{value: 4}
+		n5 := &node[int]{value: 5}
+		n6 := &node[int]{value: 6}
+		n7 := &node[int]{value: 7}
+		tr.root = n6
+		n6.setLeft(n4)
+		n6.setRight(n7)
+		n4.setLeft(n2)
+		n4.setRight(n5)
+		n2.setLeft(n1)
+		n2.setRight(n3)
+
+		tr.swap(tr.root, tr.root.left.left)
+		assert.Equal(t, n2, tr.root)
+		assert.Equal(t, n4, tr.root.left)
+		assert.Equal(t, n7, tr.root.right)
+		assert.Equal(t, n6, tr.root.left.left)
+		assert.Equal(t, n5, tr.root.left.right)
+		assert.Equal(t, n1, tr.root.left.left.left)
+		assert.Equal(t, n3, tr.root.left.left.right)
+	})
+
+	t.Run("root with left right", func(t *testing.T) {
+		tr := New[int](10)
+		n1 := &node[int]{value: 1}
+		n2 := &node[int]{value: 2}
+		n3 := &node[int]{value: 3}
+		n4 := &node[int]{value: 4}
+		n5 := &node[int]{value: 5}
+		n6 := &node[int]{value: 6}
+		n7 := &node[int]{value: 7}
+		tr.root = n6
+		n6.setLeft(n4)
+		n6.setRight(n7)
+		n4.setLeft(n2)
+		n4.setRight(n5)
+		n2.setLeft(n1)
+		n2.setRight(n3)
+
+		tr.swap(tr.root, tr.root.left.right)
+		assert.Equal(t, n5, tr.root)
+		assert.Equal(t, n4, tr.root.left)
+		assert.Equal(t, n7, tr.root.right)
+		assert.Equal(t, n2, tr.root.left.left)
+		assert.Equal(t, n6, tr.root.left.right)
+		assert.Equal(t, n1, tr.root.left.left.left)
+		assert.Equal(t, n3, tr.root.left.left.right)
+	})
+
+	t.Run("left with grandchild", func(t *testing.T) {
+		tr := New[int](10)
+		n1 := &node[int]{value: 1}
+		n2 := &node[int]{value: 2}
+		n3 := &node[int]{value: 3}
+		n4 := &node[int]{value: 4}
+		n5 := &node[int]{value: 5}
+		n6 := &node[int]{value: 6}
+		n7 := &node[int]{value: 7}
+		tr.root = n6
+		n6.setLeft(n4)
+		n6.setRight(n7)
+		n4.setLeft(n2)
+		n4.setRight(n5)
+		n2.setLeft(n1)
+		n2.setRight(n3)
+
+		tr.swap(n4, n1)
+		assert.Equal(t, n6, tr.root)
+		assert.Equal(t, n1, tr.root.left)
+		assert.Equal(t, n7, tr.root.right)
+		assert.Equal(t, n2, tr.root.left.left)
+		assert.Equal(t, n5, tr.root.left.right)
+		assert.Equal(t, n4, tr.root.left.left.left)
+		assert.Equal(t, n3, tr.root.left.left.right)
+	})
+
+	t.Run("right with grandchild", func(t *testing.T) {
+		tr := New[int](10)
+		n1 := &node[int]{value: 1}
+		n2 := &node[int]{value: 2}
+		n3 := &node[int]{value: 3}
+		n4 := &node[int]{value: 4}
+		n5 := &node[int]{value: 5}
+		n6 := &node[int]{value: 6}
+		n7 := &node[int]{value: 7}
+		tr.root = n2
+		n2.setLeft(n1)
+		n2.setRight(n4)
+		n4.setLeft(n3)
+		n4.setRight(n6)
+		n6.setLeft(n5)
+		n6.setRight(n7)
+
+		tr.swap(n4, n7)
+		assert.Equal(t, n2, tr.root)
+		assert.Equal(t, n1, tr.root.left)
+		assert.Equal(t, n7, tr.root.right)
+		assert.Equal(t, n3, tr.root.right.left)
+		assert.Equal(t, n6, tr.root.right.right)
+		assert.Equal(t, n5, tr.root.right.right.left)
+		assert.Equal(t, n4, tr.root.right.right.right)
+	})
+}
+
+func Test_tree_delete(t *testing.T) {
+	newTree := func() *tree[int] {
+		values := []int{1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1}
+		tr := New[int](len(values))
+		for _, v := range values {
+			tr.Insert(v)
+		}
+		return tr
+	}
+
+	t.Run("remove leaf, no rotate", func(t *testing.T) {
+		assert := assert.New(t)
+		tr := newTree()
+
+		p := tr.root.left.left
+		assert.Equal(1, p.value)
+		n := p.right
+		assert.Equal(1, n.value)
+		tr.delete(n)
+		assert.Equal(10, tr.Size())
+		assertRedBlackProperties(t, tr)
+		assert.Nil(n.parent)
+		assert.Nil(n.left)
+		assert.Nil(n.right)
+		assert.Nil(p.left)
+		assert.Nil(p.right)
+	})
+
+	t.Run("replace parent with child", func(t *testing.T) {
+		assert := assert.New(t)
+		tr := newTree()
+
+		p := tr.root.right
+		assert.Equal(22, p.value)
+		n := p.right
+		assert.Equal(27, n.value)
+		tr.delete(n)
+		assert.Equal(10, tr.Size())
+		assertRedBlackProperties(t, tr)
+		assert.Nil(n.parent)
+		assert.Nil(n.left)
+		assert.Nil(n.right)
+		assert.Equal(17, p.left.value)
+		assert.Equal(25, p.right.value)
+	})
+
+	t.Run("remove parent with two children, rotate right then left", func(t *testing.T) {
+		assert := assert.New(t)
+		tr := newTree()
+
+		p := tr.root
+		assert.Equal(15, p.value)
+		n := p.right
+		assert.Equal(22, n.value)
+		tr.delete(n)
+		assert.Equal(10, tr.Size())
+		assertRedBlackProperties(t, tr)
+		assert.Nil(n.parent)
+		assert.Nil(n.left)
+		assert.Nil(n.right)
+		assert.Equal(tr.root, p, "should keep 15 at root")
+		assert.Equal(25, p.right.value)
+		assert.Equal(17, p.right.left.value)
+		assert.Equal(27, p.right.right.value)
+	})
+
+	// 	p = tr.root.left.right
+	// 	n = p.left
+	// 	assert.Equal(11, p.value)
+	// 	assert.Equal(8, n.value)
+	// 	tr.delete(n)
+	// 	assert.Equal(9, tr.Size())
+	// 	assertRedBlackProperties(t, tr)
+	// 	assert.Nil(n.parent)
+	// 	assert.Nil(p.left, "should remove leaf node")
+	// 	assert.Equal(13, p.right.value)
+
+	// 	p = tr.root.left
+	// 	n = p.right
+	// 	assert.Equal(6, p.value)
+	// 	assert.Equal(11, n.value)
+	// 	tr.delete(n)
+	// 	assert.Equal(8, tr.Size())
+	// 	assertRedBlackProperties(t, tr)
+	// 	assert.Nil(n.parent)
+	// 	assert.Equal(1, p.left.value, "should leave sibling untouched")
+	// 	assert.Equal(13, p.right.value, "should replace with only child")
+
+	// 	p = tr.root
+	// 	n = p.right
+	// 	assert.Equal(15, p.value)
+	// 	assert.Equal(22, n.value)
+	// 	tr.delete(n)
+	// 	assert.Equal(7, tr.Size())
+	// 	assertRedBlackProperties(t, tr)
+	// 	assert.Nil(n.parent)
+	// 	assert.Equal(25, p.right.value, "should rotate 25 up")
+	// 	assert.Equal(17, p.right.left.value, "should rotate 25 up")
+	// 	assert.Equal(27, p.right.right.value, "should rotate 25 up")
+
+	// 	n = tr.root
+	// 	assert.Equal(15, n.value)
+	// 	tr.delete(n)
+	// 	assert.Equal(6, tr.Size())
+	// 	assertRedBlackProperties(t, tr)
+	// 	assert.Nil(n.parent)
+	// 	assert.Equal(17, tr.root.value, "should replace root with successor")
+	// 	assert.Equal(6, tr.root.left.value, "should replace root with successor")
+	// 	assert.Equal(25, tr.root.right.value, "should replace root with successor")
+	// 	assert.Nil(tr.root.right.left, "should replace root with successor")
+	// })
+}
