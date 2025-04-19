@@ -25,10 +25,19 @@ func New[T cmp.Ordered](capacity int) *tree[T] {
 }
 
 func (t *tree[T]) nodeForInsert() *node[T] {
-	next := t.nodes[t.i]
+	next := &t.nodes[t.i]
+
+	// If the node is already in the tree, remove it.
+	if next.parent != nil {
+		t.delete(next)
+	}
+
 	t.i = (t.i + 1) % cap(t.nodes)
 	t.size = min(t.size+1, cap(t.nodes))
-	return &next
+
+	// Inserted nodes start as red
+	next.color = red
+	return next
 }
 
 func (t *tree[T]) Size() int {
@@ -38,7 +47,6 @@ func (t *tree[T]) Size() int {
 func (t *tree[T]) Insert(v T) {
 	n := t.nodeForInsert()
 	n.value = v
-	n.color = red
 
 	if t.root == nil {
 		t.root = n

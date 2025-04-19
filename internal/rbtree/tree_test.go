@@ -491,50 +491,35 @@ func Test_tree_delete(t *testing.T) {
 		assert.Nil(tr.root.left)
 		assert.Equal(8, tr.root.right.value)
 	})
+}
 
-	// 	p = tr.root.left.right
-	// 	n = p.left
-	// 	assert.Equal(11, p.value)
-	// 	assert.Equal(8, n.value)
-	// 	tr.delete(n)
-	// 	assert.Equal(9, tr.Size())
-	// 	assertRedBlackProperties(t, tr)
-	// 	assert.Nil(n.parent)
-	// 	assert.Nil(p.left, "should remove leaf node")
-	// 	assert.Equal(13, p.right.value)
+func Test_tree_rollingWindowAtCapacity(t *testing.T) {
+	t.Run("single node", func(t *testing.T) {
+		assert := assert.New(t)
+		tr := New[int](1)
+		tr.Insert(1)
+		assert.Equal(1, tr.Size())
+		assert.Equal(1, tr.root.value)
+		tr.Insert(2)
+		assert.Equal(1, tr.Size())
+		assert.Equal(2, tr.root.value, "should replace existing value")
+	})
 
-	// 	p = tr.root.left
-	// 	n = p.right
-	// 	assert.Equal(6, p.value)
-	// 	assert.Equal(11, n.value)
-	// 	tr.delete(n)
-	// 	assert.Equal(8, tr.Size())
-	// 	assertRedBlackProperties(t, tr)
-	// 	assert.Nil(n.parent)
-	// 	assert.Equal(1, p.left.value, "should leave sibling untouched")
-	// 	assert.Equal(13, p.right.value, "should replace with only child")
+	t.Run("three nodes", func(t *testing.T) {
+		assert := assert.New(t)
+		tr := New[int](3)
+		tr.Insert(1)
+		tr.Insert(2)
+		tr.Insert(3)
+		assert.Equal(3, tr.Size())
+		assert.Equal(2, tr.root.value)
+		assert.Equal(1, tr.root.left.value)
+		assert.Equal(3, tr.root.right.value)
 
-	// 	p = tr.root
-	// 	n = p.right
-	// 	assert.Equal(15, p.value)
-	// 	assert.Equal(22, n.value)
-	// 	tr.delete(n)
-	// 	assert.Equal(7, tr.Size())
-	// 	assertRedBlackProperties(t, tr)
-	// 	assert.Nil(n.parent)
-	// 	assert.Equal(25, p.right.value, "should rotate 25 up")
-	// 	assert.Equal(17, p.right.left.value, "should rotate 25 up")
-	// 	assert.Equal(27, p.right.right.value, "should rotate 25 up")
-
-	// 	n = tr.root
-	// 	assert.Equal(15, n.value)
-	// 	tr.delete(n)
-	// 	assert.Equal(6, tr.Size())
-	// 	assertRedBlackProperties(t, tr)
-	// 	assert.Nil(n.parent)
-	// 	assert.Equal(17, tr.root.value, "should replace root with successor")
-	// 	assert.Equal(6, tr.root.left.value, "should replace root with successor")
-	// 	assert.Equal(25, tr.root.right.value, "should replace root with successor")
-	// 	assert.Nil(tr.root.right.left, "should replace root with successor")
-	// })
+		tr.Insert(4)
+		assert.Equal(3, tr.Size(), "should replace oldest value")
+		assert.Equal(3, tr.root.value)
+		assert.Equal(2, tr.root.left.value)
+		assert.Equal(4, tr.root.right.value)
+	})
 }
