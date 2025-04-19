@@ -8,6 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func makeTree(values ...int) *tree[int] {
+	tr := New[int](len(values))
+	for _, v := range values {
+		tr.Insert(v)
+	}
+	return tr
+}
+
 func assertRedBlackPropertiesNode[T cmp.Ordered](t *testing.T, n *node[T]) (blackCount int, ok bool) {
 	if n == nil {
 		return 0, true
@@ -322,18 +330,9 @@ func Test_tree_swap(t *testing.T) {
 }
 
 func Test_tree_delete(t *testing.T) {
-	newTree := func() *tree[int] {
-		values := []int{1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1}
-		tr := New[int](len(values))
-		for _, v := range values {
-			tr.Insert(v)
-		}
-		return tr
-	}
-
 	t.Run("remove leaf, no rotate", func(t *testing.T) {
 		assert := assert.New(t)
-		tr := newTree()
+		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root.left.left
 		assert.Equal(1, p.value)
@@ -351,7 +350,7 @@ func Test_tree_delete(t *testing.T) {
 
 	t.Run("replace parent with child; case 4", func(t *testing.T) {
 		assert := assert.New(t)
-		tr := newTree()
+		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root.right
 		assert.Equal(22, p.value)
@@ -369,7 +368,7 @@ func Test_tree_delete(t *testing.T) {
 
 	t.Run("remove parent with two children; cases 5 right and 6 left", func(t *testing.T) {
 		assert := assert.New(t)
-		tr := newTree()
+		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root
 		assert.Equal(15, p.value)
@@ -389,11 +388,7 @@ func Test_tree_delete(t *testing.T) {
 
 	t.Run("case 3 rotate left", func(t *testing.T) {
 		assert := assert.New(t)
-		values := []int{5, 8, 1, 7, 9, 6}
-		tr := New[int](len(values))
-		for _, v := range values {
-			tr.Insert(v)
-		}
+		tr := makeTree(5, 8, 1, 7, 9, 6)
 
 		p := tr.root
 		assert.Equal(5, p.value)
@@ -413,11 +408,7 @@ func Test_tree_delete(t *testing.T) {
 
 	t.Run("case 3 rotate left", func(t *testing.T) {
 		assert := assert.New(t)
-		values := []int{5, 8, 1, 7, 9, 6}
-		tr := New[int](len(values))
-		for _, v := range values {
-			tr.Insert(v)
-		}
+		tr := makeTree(5, 8, 1, 7, 9, 6)
 
 		p := tr.root
 		assert.Equal(5, p.value)
@@ -437,11 +428,7 @@ func Test_tree_delete(t *testing.T) {
 
 	t.Run("case 3 rotate right", func(t *testing.T) {
 		assert := assert.New(t)
-		values := []int{5, 8, 2, 1, 3, 4}
-		tr := New[int](len(values))
-		for _, v := range values {
-			tr.Insert(v)
-		}
+		tr := makeTree(5, 8, 2, 1, 3, 4)
 
 		p := tr.root
 		assert.Equal(5, p.value)
@@ -461,11 +448,7 @@ func Test_tree_delete(t *testing.T) {
 
 	t.Run("case 2", func(t *testing.T) {
 		assert := assert.New(t)
-		values := []int{5, 2, 8, 6}
-		tr := New[int](len(values))
-		for _, v := range values {
-			tr.Insert(v)
-		}
+		tr := makeTree(5, 2, 8, 6)
 
 		p := tr.root
 		assert.Equal(5, p.value)
@@ -507,10 +490,7 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 
 	t.Run("three nodes", func(t *testing.T) {
 		assert := assert.New(t)
-		tr := New[int](3)
-		tr.Insert(1)
-		tr.Insert(2)
-		tr.Insert(3)
+		tr := makeTree(1, 2, 3)
 		assert.Equal(3, tr.Size())
 		assert.Equal(2, tr.root.value)
 		assert.Equal(1, tr.root.left.value)
@@ -521,5 +501,57 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 		assert.Equal(3, tr.root.value)
 		assert.Equal(2, tr.root.left.value)
 		assert.Equal(4, tr.root.right.value)
+	})
+
+	t.Run("three nodes replace root", func(t *testing.T) {
+		assert := assert.New(t)
+		tr := makeTree(3, 1, 5)
+		assert.Equal(3, tr.Size())
+		assert.Equal(3, tr.root.value)
+		assert.Equal(1, tr.root.left.value)
+		assert.Equal(5, tr.root.right.value)
+
+		tr.Insert(4)
+		assert.Equal(3, tr.Size(), "should replace oldest value at root")
+		assert.Equal(4, tr.root.value)
+		assert.Nil(tr.root.parent)
+		assert.Equal(1, tr.root.left.value)
+		assert.Equal(5, tr.root.right.value)
+	})
+}
+
+func Test_tree_minMax(t *testing.T) {
+	t.Run("empty tree", func(t *testing.T) {
+		tr := New[int](1)
+		assert.Equal(t, 0, tr.Min())
+		assert.Equal(t, 0, tr.Max())
+	})
+
+	t.Run("single node", func(t *testing.T) {
+		tr := New[int](1)
+		tr.Insert(5)
+		assert.Equal(t, 5, tr.Min())
+		assert.Equal(t, 5, tr.Max())
+		tr.Insert(6)
+		assert.Equal(t, 6, tr.Min())
+		assert.Equal(t, 6, tr.Max())
+	})
+
+	t.Run("three nodes", func(t *testing.T) {
+		tr := makeTree(2, 1, 3)
+		assert.Equal(t, 1, tr.Min())
+		assert.Equal(t, 3, tr.Max())
+	})
+
+	t.Run("rolling three nodes", func(t *testing.T) {
+		tr := makeTree(1, 2, 3)
+		tr.Insert(4) // replaces 1
+		assert.Equal(t, 2, tr.Min())
+		assert.Equal(t, 4, tr.Max())
+		tr.Insert(1) // replaces 2
+		tr.Insert(2) // replaces 3
+		tr.Insert(3) // replaces 4
+		assert.Equal(t, 1, tr.Min())
+		assert.Equal(t, 3, tr.Max())
 	})
 }

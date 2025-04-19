@@ -28,7 +28,13 @@ func (t *tree[T]) nodeForInsert() *node[T] {
 	next := &t.nodes[t.i]
 
 	// If the node is already in the tree, remove it.
-	if next.parent != nil {
+	if next.parent != nil || next == t.root {
+		if next == t.min {
+			t.min = next.parent
+		}
+		if next == t.max {
+			t.max = next.parent
+		}
 		t.delete(next)
 	}
 
@@ -44,12 +50,32 @@ func (t *tree[T]) Size() int {
 	return t.size
 }
 
+func (t *tree[T]) Min() T {
+	if t == nil || t.min == nil {
+		var zero T
+		return zero
+	}
+
+	return t.min.value
+}
+
+func (t *tree[T]) Max() T {
+	if t == nil || t.max == nil {
+		var zero T
+		return zero
+	}
+
+	return t.max.value
+}
+
 func (t *tree[T]) Insert(v T) {
 	n := t.nodeForInsert()
 	n.value = v
 
 	if t.root == nil {
 		t.root = n
+		t.min = n
+		t.max = n
 		n.parent = nil
 		t.rebalanceForInsert(n)
 		return
@@ -60,6 +86,10 @@ func (t *tree[T]) Insert(v T) {
 		if v < p.value {
 			if p.left == nil {
 				p.setLeft(n)
+
+				if p == t.min {
+					t.min = n
+				}
 				break
 			} else {
 				p = p.left
@@ -67,12 +97,17 @@ func (t *tree[T]) Insert(v T) {
 		} else {
 			if p.right == nil {
 				p.setRight(n)
+
+				if p == t.max {
+					t.max = n
+				}
 				break
 			} else {
 				p = p.right
 			}
 		}
 	}
+
 	t.rebalanceForInsert(n)
 }
 
@@ -123,7 +158,9 @@ func (t *tree[T]) rebalanceForInsert(n *node[T]) {
 func (t *tree[T]) replace(old, new *node[T]) {
 	if old.parent == nil {
 		t.root = new
-		new.parent = nil
+		if new != nil {
+			new.parent = nil
+		}
 	} else if old == old.parent.left {
 		old.parent.setLeft(new)
 	} else {
@@ -222,11 +259,6 @@ func (t *tree[T]) delete(n *node[T]) {
 	}
 
 	t.replace(n, child)
-
-	// root should be black
-	if n.parent == nil && child != nil {
-		child.color = black
-	}
 
 	// Remove the node completely from the tree
 	orig.parent = nil
