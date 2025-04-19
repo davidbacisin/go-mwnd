@@ -349,7 +349,7 @@ func Test_tree_delete(t *testing.T) {
 		assert.Nil(p.right)
 	})
 
-	t.Run("replace parent with child", func(t *testing.T) {
+	t.Run("replace parent with child; case 4", func(t *testing.T) {
 		assert := assert.New(t)
 		tr := newTree()
 
@@ -367,7 +367,7 @@ func Test_tree_delete(t *testing.T) {
 		assert.Equal(25, p.right.value)
 	})
 
-	t.Run("remove parent with two children, rotate right then left", func(t *testing.T) {
+	t.Run("remove parent with two children; cases 5 right and 6 left", func(t *testing.T) {
 		assert := assert.New(t)
 		tr := newTree()
 
@@ -385,6 +385,111 @@ func Test_tree_delete(t *testing.T) {
 		assert.Equal(25, p.right.value)
 		assert.Equal(17, p.right.left.value)
 		assert.Equal(27, p.right.right.value)
+	})
+
+	t.Run("case 3 rotate left", func(t *testing.T) {
+		assert := assert.New(t)
+		values := []int{5, 8, 1, 7, 9, 6}
+		tr := New[int](len(values))
+		for _, v := range values {
+			tr.Insert(v)
+		}
+
+		p := tr.root
+		assert.Equal(5, p.value)
+		n := p.left
+		assert.Equal(1, n.value)
+		tr.delete(n)
+		assertRedBlackProperties(t, tr)
+		assert.Nil(n.parent)
+		assert.Nil(n.left)
+		assert.Nil(n.right)
+		assert.Equal(8, tr.root.value)
+		assert.Equal(6, tr.root.left.value)
+		assert.Equal(9, tr.root.right.value)
+		assert.Equal(5, tr.root.left.left.value)
+		assert.Equal(7, tr.root.left.right.value)
+	})
+
+	t.Run("case 3 rotate left", func(t *testing.T) {
+		assert := assert.New(t)
+		values := []int{5, 8, 1, 7, 9, 6}
+		tr := New[int](len(values))
+		for _, v := range values {
+			tr.Insert(v)
+		}
+
+		p := tr.root
+		assert.Equal(5, p.value)
+		n := p.left
+		assert.Equal(1, n.value)
+		tr.delete(n)
+		assertRedBlackProperties(t, tr)
+		assert.Nil(n.parent)
+		assert.Nil(n.left)
+		assert.Nil(n.right)
+		assert.Equal(8, tr.root.value)
+		assert.Equal(6, tr.root.left.value)
+		assert.Equal(9, tr.root.right.value)
+		assert.Equal(5, tr.root.left.left.value)
+		assert.Equal(7, tr.root.left.right.value)
+	})
+
+	t.Run("case 3 rotate right", func(t *testing.T) {
+		assert := assert.New(t)
+		values := []int{5, 8, 2, 1, 3, 4}
+		tr := New[int](len(values))
+		for _, v := range values {
+			tr.Insert(v)
+		}
+
+		p := tr.root
+		assert.Equal(5, p.value)
+		n := p.right
+		assert.Equal(8, n.value)
+		tr.delete(n)
+		assertRedBlackProperties(t, tr)
+		assert.Nil(n.parent)
+		assert.Nil(n.left)
+		assert.Nil(n.right)
+		assert.Equal(2, tr.root.value)
+		assert.Equal(1, tr.root.left.value)
+		assert.Equal(4, tr.root.right.value)
+		assert.Equal(3, tr.root.right.left.value)
+		assert.Equal(5, tr.root.right.right.value)
+	})
+
+	t.Run("case 2", func(t *testing.T) {
+		assert := assert.New(t)
+		values := []int{5, 2, 8, 6}
+		tr := New[int](len(values))
+		for _, v := range values {
+			tr.Insert(v)
+		}
+
+		p := tr.root
+		assert.Equal(5, p.value)
+		n := p.left
+		assert.Equal(2, n.value)
+
+		// Delete the 6 to get the tree in the correct state
+		n6 := p.right.left
+		assert.Equal(6, n6.value)
+		tr.delete(n6)
+
+		assert.Equal(black, p.color)
+		assert.Equal(black, n.color)
+		assert.Equal(black, p.right.color)
+
+		// Now it will trigger delete case 2
+		tr.delete(n)
+		assertRedBlackProperties(t, tr)
+		assert.Nil(n.parent)
+		assert.Nil(n.left)
+		assert.Nil(n.right)
+		assert.Equal(5, tr.root.value)
+		assert.Nil(tr.root.left)
+		assert.Equal(8, tr.root.right.value)
 	})
 
 	// 	p = tr.root.left.right

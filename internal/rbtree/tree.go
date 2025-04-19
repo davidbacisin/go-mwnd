@@ -235,6 +235,17 @@ func (t *tree[T]) rebalanceForDelete(n *node[T]) {
 
 	// Case 2
 	s := n.sibling()
+	if p.color == black &&
+		s != nil &&
+		s.safeColor() == black &&
+		s.left.safeColor() == black &&
+		s.right.safeColor() == black {
+		s.color = red
+		t.rebalanceForDelete(p)
+		return
+	}
+
+	// Case 3
 	if s.safeColor() == red {
 		p.color = red
 		s.color = black
@@ -247,17 +258,6 @@ func (t *tree[T]) rebalanceForDelete(n *node[T]) {
 		// Reassign p and s after rotation
 		p = n.parent
 		s = n.sibling()
-	}
-
-	// Case 3
-	if p.color == black &&
-		s != nil &&
-		s.safeColor() == black &&
-		s.left.safeColor() == black &&
-		s.right.safeColor() == black {
-		s.color = red
-		t.rebalanceForDelete(p)
-		return
 	}
 
 	// Case 4
