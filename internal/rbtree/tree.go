@@ -29,12 +29,6 @@ func (t *tree[T]) nodeForInsert() *node[T] {
 
 	// If the node is already in the tree, remove it.
 	if next.parent != nil || next == t.root {
-		if next == t.min {
-			t.min = next.parent
-		}
-		if next == t.max {
-			t.max = next.parent
-		}
 		t.delete(next)
 	}
 
@@ -233,7 +227,6 @@ func (t *tree[T]) delete(n *node[T]) {
 		return
 	}
 
-	orig := n
 	t.size--
 
 	if n.left != nil && n.right != nil {
@@ -245,12 +238,31 @@ func (t *tree[T]) delete(n *node[T]) {
 
 		// Swap places with the in-order predecessor
 		t.swap(n, pred)
+
+		// Note that because this node had both left and right
+		// children, it couldn't possibly be either min or max.
 	}
 
 	// Invariant: n.left, n.right, or both are nil
 	child := n.left
 	if child == nil {
 		child = n.right
+	}
+
+	if n == t.min {
+		if child == nil {
+			t.min = n.parent
+		} else {
+			t.min = child
+		}
+	}
+
+	if n == t.max {
+		if child == nil {
+			t.max = n.parent
+		} else {
+			t.max = child
+		}
 	}
 
 	if n.color == black {
@@ -261,9 +273,9 @@ func (t *tree[T]) delete(n *node[T]) {
 	t.replace(n, child)
 
 	// Remove the node completely from the tree
-	orig.parent = nil
-	orig.left = nil
-	orig.right = nil
+	n.parent = nil
+	n.left = nil
+	n.right = nil
 }
 
 func (t *tree[T]) rebalanceForDelete(n *node[T]) {

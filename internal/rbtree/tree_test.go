@@ -3,6 +3,7 @@ package rbtree
 import (
 	"cmp"
 	"math/rand/v2"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -553,5 +554,28 @@ func Test_tree_minMax(t *testing.T) {
 		tr.Insert(3) // replaces 4
 		assert.Equal(t, 1, tr.Min())
 		assert.Equal(t, 3, tr.Max())
+	})
+
+	t.Run("rolling 50 nodes random", func(t *testing.T) {
+		const size = 50
+		values := make([]int, 0, size)
+		tr := New[int](size)
+		for i := 0; i < 1000; i++ {
+			v := rand.Int()
+			if i >= size {
+				k := i % size
+				values[k] = v
+			} else {
+				values = append(values, v)
+			}
+
+			tr.Insert(v)
+			expectedMin := slices.Min(values)
+			expectedMax := slices.Max(values)
+			if !assert.Equal(t, expectedMin, tr.Min(), "min should match") ||
+				!assert.Equal(t, expectedMax, tr.Max(), "max should match") {
+				break
+			}
+		}
 	})
 }
