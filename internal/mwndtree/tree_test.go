@@ -1,7 +1,6 @@
 package mwndtree
 
 import (
-	"cmp"
 	"math/rand/v2"
 	"slices"
 	"testing"
@@ -17,7 +16,7 @@ func makeTree(values ...int) *tree[int] {
 	return tr
 }
 
-func assertRedBlackPropertiesNode[T cmp.Ordered](t *testing.T, n *node[T]) (blackCount int, ok bool) {
+func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (blackCount int, ok bool) {
 	if n == nil {
 		return 0, true
 	}
@@ -65,7 +64,7 @@ func assertRedBlackPropertiesNode[T cmp.Ordered](t *testing.T, n *node[T]) (blac
 	return blackCount, ok
 }
 
-func assertRedBlackProperties[T cmp.Ordered](t *testing.T, tr *tree[T]) bool {
+func assertRedBlackProperties[T Numeric](t *testing.T, tr *tree[T]) bool {
 	_, ok := assertRedBlackPropertiesNode(t, tr.root)
 	return ok
 }
@@ -521,7 +520,7 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 	})
 }
 
-func Test_tree_minMax(t *testing.T) {
+func Test_tree_MinMax(t *testing.T) {
 	t.Run("empty tree", func(t *testing.T) {
 		tr := New[int](1)
 		assert.Equal(t, 0, tr.Min())
@@ -574,6 +573,65 @@ func Test_tree_minMax(t *testing.T) {
 			expectedMax := slices.Max(values)
 			if !assert.Equal(t, expectedMin, tr.Min(), "min should match") ||
 				!assert.Equal(t, expectedMax, tr.Max(), "max should match") {
+				break
+			}
+		}
+	})
+}
+
+func Test_tree_Mean(t *testing.T) {
+	t.Run("empty tree", func(t *testing.T) {
+		tr := New[int](1)
+		assert.Equal(t, 0, tr.Mean())
+	})
+
+	t.Run("single node", func(t *testing.T) {
+		tr := New[int](1)
+		tr.Insert(5)
+		assert.Equal(t, 5, tr.Mean())
+		tr.Insert(6)
+		assert.Equal(t, 6, tr.Mean())
+	})
+
+	t.Run("three nodes", func(t *testing.T) {
+		tr := makeTree(2, 1, 3)
+		assert.Equal(t, 2, tr.Mean())
+	})
+
+	t.Run("rolling three nodes", func(t *testing.T) {
+		tr := makeTree(1, 2, 3)
+		tr.Insert(4) // replaces 1
+		assert.Equal(t, 3, tr.Mean())
+		tr.Insert(5) // replaces 2
+		assert.Equal(t, 4, tr.Mean())
+		tr.Insert(0) // replaces 3
+		assert.Equal(t, 3, tr.Mean())
+		tr.Insert(10) // replaces 4
+		assert.Equal(t, 5, tr.Mean())
+	})
+
+	t.Run("rolling 50 nodes random", func(t *testing.T) {
+		const size = 50
+		values := make([]int, 0, size)
+		tr := New[int](size)
+		for i := 0; i < 1000; i++ {
+			// Limit the random numbers to avoid overflow when summing
+			v := rand.IntN(65536)
+			if i >= size {
+				k := i % size
+				values[k] = v
+			} else {
+				values = append(values, v)
+			}
+
+			tr.Insert(v)
+			var sum int
+			for _, v := range values {
+				sum += v
+			}
+
+			expectedMean := sum / len(values)
+			if !assert.Equal(t, expectedMean, tr.Mean(), "mean should match") {
 				break
 			}
 		}

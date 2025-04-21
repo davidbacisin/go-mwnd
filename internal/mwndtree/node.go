@@ -1,7 +1,6 @@
 package mwndtree
 
 import (
-	"cmp"
 	"fmt"
 	"strings"
 )
@@ -12,7 +11,13 @@ const (
 	black, red color = false, true
 )
 
-type node[T cmp.Ordered] struct {
+type Numeric interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64
+}
+
+type node[T Numeric] struct {
 	value               T
 	parent, left, right *node[T]
 	color               color
@@ -80,7 +85,7 @@ func (n *node[T]) String() string {
 	return sb.String()
 }
 
-func printHelper[T cmp.Ordered](n *node[T], level int, sb *strings.Builder) {
+func printHelper[T Numeric](n *node[T], level int, sb *strings.Builder) {
 	if n == nil {
 		sb.WriteString("<empty>")
 		return

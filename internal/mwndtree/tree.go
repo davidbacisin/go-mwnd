@@ -1,14 +1,13 @@
 package mwndtree
 
-import (
-	"cmp"
-)
-
-type tree[T cmp.Ordered] struct {
+type tree[T Numeric] struct {
 	// nodes is a ring buffer of all nodes, pre-allocated to the max capacity of the tree so that
 	// memory allocations are minimized during normal operation.
 	nodes          []node[T]
 	root, min, max *node[T]
+
+	// deviation is the cumulative deviation from the mean
+	deviation T
 
 	// i represents the oldest node in the tree, which will be replaced
 	// by the next inserted value
@@ -16,7 +15,7 @@ type tree[T cmp.Ordered] struct {
 	size int
 }
 
-func New[T cmp.Ordered](capacity int) *tree[T] {
+func New[T Numeric](capacity int) *tree[T] {
 	return &tree[T]{
 		nodes: make([]node[T], capacity),
 		i:     0,
@@ -62,8 +61,19 @@ func (t *tree[T]) Max() T {
 	return t.max.value
 }
 
+func (t *tree[T]) Mean() T {
+	if t == nil || t.size == 0 {
+		var zero T
+		return zero
+	}
+
+	return t.deviation / T(t.size)
+}
+
 func (t *tree[T]) Insert(v T) {
 	n := t.nodeForInsert()
+	// For numerical stability, only add the difference from the old value.
+	t.deviation += v - n.value
 	n.value = v
 
 	if t.root == nil {
