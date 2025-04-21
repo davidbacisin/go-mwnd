@@ -6,8 +6,7 @@ type tree[T Numeric] struct {
 	nodes          []node[T]
 	root, min, max *node[T]
 
-	// deviation is the cumulative deviation from the mean
-	deviation T
+	mean float64
 
 	// i represents the oldest node in the tree, which will be replaced
 	// by the next inserted value
@@ -61,19 +60,15 @@ func (t *tree[T]) Max() T {
 	return t.max.value
 }
 
-func (t *tree[T]) Mean() T {
-	if t == nil || t.size == 0 {
-		var zero T
-		return zero
-	}
-
-	return t.deviation / T(t.size)
+func (t *tree[T]) Mean() float64 {
+	return t.mean
 }
 
 func (t *tree[T]) Insert(v T) {
 	n := t.nodeForInsert()
-	// For numerical stability, only add the difference from the old value.
-	t.deviation += v - n.value
+	// Based on Welford's algorithm for online variance, compute the mean with
+	// a numerically stable approach.
+	t.mean += (float64(v) - t.mean) / float64(t.size)
 	n.value = v
 
 	if t.root == nil {
@@ -238,6 +233,13 @@ func (t *tree[T]) delete(n *node[T]) {
 	}
 
 	t.size--
+
+	// Adjust the mean for the removed value
+	if t.size == 0 {
+		t.mean = 0
+	} else {
+		t.mean -= (float64(n.value) - t.mean) / float64(t.size)
+	}
 
 	if n.left != nil && n.right != nil {
 		// Find the immediate predecessor
