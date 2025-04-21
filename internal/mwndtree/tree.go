@@ -6,7 +6,11 @@ type tree[T Numeric] struct {
 	nodes          []node[T]
 	root, min, max *node[T]
 
+	// mean is the mean value of all samples in the tree
 	mean float64
+
+	// tss is the total sum of squared differences from the mean
+	tss float64
 
 	// i represents the oldest node in the tree, which will be replaced
 	// by the next inserted value
@@ -64,12 +68,19 @@ func (t *tree[T]) Mean() float64 {
 	return t.mean
 }
 
+func (t *tree[T]) TotalSumSquares() float64 {
+	return t.tss
+}
+
 func (t *tree[T]) Insert(v T) {
 	n := t.nodeForInsert()
-	// Based on Welford's algorithm for online variance, compute the mean with
-	// a numerically stable approach.
-	t.mean += (float64(v) - t.mean) / float64(t.size)
 	n.value = v
+
+	// Welford's algorithm for online variance, which is a numerically stable approach.
+	delta := float64(v) - t.mean
+	t.mean += delta / float64(t.size)
+	delta2 := float64(v) - t.mean
+	t.tss += delta * delta2
 
 	if t.root == nil {
 		t.root = n
@@ -234,11 +245,15 @@ func (t *tree[T]) delete(n *node[T]) {
 
 	t.size--
 
-	// Adjust the mean for the removed value
+	// Adjust the mean and tss for the removed value
 	if t.size == 0 {
 		t.mean = 0
+		t.tss = 0
 	} else {
-		t.mean -= (float64(n.value) - t.mean) / float64(t.size)
+		delta2 := float64(n.value) - t.mean
+		t.mean -= delta2 / float64(t.size)
+		delta := float64(n.value) - t.mean
+		t.tss -= delta * delta2
 	}
 
 	if n.left != nil && n.right != nil {

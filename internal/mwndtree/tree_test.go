@@ -579,35 +579,43 @@ func Test_tree_MinMax(t *testing.T) {
 	})
 }
 
-func Test_tree_Mean(t *testing.T) {
+func Test_tree_MeanTss(t *testing.T) {
 	t.Run("empty tree", func(t *testing.T) {
 		tr := New[int](1)
 		assert.Equal(t, 0.0, tr.Mean())
+		assert.Equal(t, 0.0, tr.TotalSumSquares())
 	})
 
 	t.Run("single node", func(t *testing.T) {
 		tr := New[int](1)
 		tr.Insert(5)
 		assert.Equal(t, 5.0, tr.Mean())
+		assert.Equal(t, 0.0, tr.TotalSumSquares())
 		tr.Insert(6)
 		assert.Equal(t, 6.0, tr.Mean())
+		assert.Equal(t, 0.0, tr.TotalSumSquares())
 	})
 
 	t.Run("three nodes", func(t *testing.T) {
 		tr := makeTree(2, 1, 3)
 		assert.Equal(t, 2.0, tr.Mean())
+		assert.Equal(t, 2.0, tr.TotalSumSquares())
 	})
 
 	t.Run("rolling three nodes", func(t *testing.T) {
 		tr := makeTree(1, 2, 3)
 		tr.Insert(4) // replaces 1
 		assert.Equal(t, 3.0, tr.Mean())
+		assert.Equal(t, 2.0, tr.TotalSumSquares())
 		tr.Insert(5) // replaces 2
 		assert.Equal(t, 4.0, tr.Mean())
+		assert.Equal(t, 2.0, tr.TotalSumSquares())
 		tr.Insert(0) // replaces 3
 		assert.Equal(t, 3.0, tr.Mean())
+		assert.Equal(t, 14.0, tr.TotalSumSquares())
 		tr.Insert(10) // replaces 4
 		assert.Equal(t, 5.0, tr.Mean())
+		assert.Equal(t, 50.0, tr.TotalSumSquares())
 	})
 
 	t.Run("rolling 50 nodes random", func(t *testing.T) {
@@ -631,7 +639,16 @@ func Test_tree_Mean(t *testing.T) {
 			}
 
 			expectedMean := sum / float64(len(values))
-			if !assert.InDelta(t, expectedMean, tr.Mean(), 1e-6, "mean should be within error delta") {
+
+			var expectedTss float64
+			for _, v := range values {
+				delta := float64(v) - expectedMean
+				expectedTss += delta * delta
+			}
+
+			// expectedTss can be rather large, so the allowed error delta is adjusted accordingly
+			if !assert.InDelta(t, expectedMean, tr.Mean(), 1e-6, "mean should be within error delta") ||
+				!assert.InDelta(t, expectedTss, tr.TotalSumSquares(), expectedTss*1e-12, "tss should be within error delta") {
 				break
 			}
 		}
