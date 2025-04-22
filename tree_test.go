@@ -11,7 +11,7 @@ import (
 func makeTree(values ...int) *Window[int] {
 	tr := New[int](len(values))
 	for _, v := range values {
-		tr.Insert(v)
+		tr.Put(v)
 	}
 	return tr
 }
@@ -76,27 +76,27 @@ func Test_tree_Insert(t *testing.T) {
 		tr := New[int](11)
 		assert.Equal(0, tr.Size())
 
-		tr.Insert(1)
+		tr.Put(1)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(1, tr.root.value, "should insert root")
 
-		tr.Insert(22)
+		tr.Put(22)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(22, tr.root.right.value, "should insert child")
 
-		tr.Insert(27)
+		tr.Put(27)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(22, tr.root.value, "should rotate left")
 		assert.Equal(1, tr.root.left.value, "should rotate left")
 		assert.Equal(27, tr.root.right.value, "should rotate left")
 
-		tr.Insert(15)
+		tr.Put(15)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(22, tr.root.value)
 		assert.Equal(1, tr.root.left.value)
 		assert.Equal(15, tr.root.left.right.value)
 
-		tr.Insert(6)
+		tr.Put(6)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(22, tr.root.value)
 		assert.Equal(6, tr.root.left.value, "should rotate right then left")
@@ -104,7 +104,7 @@ func Test_tree_Insert(t *testing.T) {
 		assert.Equal(15, tr.root.left.right.value, "should rotate right then left")
 		assert.Equal(red, tr.root.left.right.color)
 
-		tr.Insert(11)
+		tr.Put(11)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(22, tr.root.value)
 		assert.Equal(6, tr.root.left.value)
@@ -112,16 +112,16 @@ func Test_tree_Insert(t *testing.T) {
 		assert.Equal(black, tr.root.left.right.color, "should recolor 15")
 		assert.Equal(11, tr.root.left.right.left.value)
 
-		tr.Insert(17)
+		tr.Put(17)
 		assertRedBlackProperties(t, tr)
 
-		tr.Insert(25)
+		tr.Put(25)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(22, tr.root.value)
 		assert.Equal(27, tr.root.right.value)
 		assert.Equal(25, tr.root.right.left.value)
 
-		tr.Insert(13)
+		tr.Put(13)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(15, tr.root.value, "should rotate 15 up to root")
 		assert.Equal(6, tr.root.left.value, "should rotate 15 up to root")
@@ -132,10 +132,10 @@ func Test_tree_Insert(t *testing.T) {
 		assert.Equal(17, tr.root.right.left.value, "should rotate 15 up to root")
 		assert.Equal(27, tr.root.right.right.value, "should rotate 15 up to root")
 
-		tr.Insert(8)
+		tr.Put(8)
 		assertRedBlackProperties(t, tr)
 
-		tr.Insert(1)
+		tr.Put(1)
 		assertRedBlackProperties(t, tr)
 		assert.Equal(15, tr.root.value)
 		assert.Equal(6, tr.root.left.value)
@@ -150,7 +150,7 @@ func Test_tree_Insert(t *testing.T) {
 		tr := New[int](size)
 		for range size {
 			v := rand.Int()
-			tr.Insert(v)
+			tr.Put(v)
 		}
 
 		assertRedBlackProperties(t, tr)
@@ -480,10 +480,10 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 	t.Run("single node", func(t *testing.T) {
 		assert := assert.New(t)
 		tr := New[int](1)
-		tr.Insert(1)
+		tr.Put(1)
 		assert.Equal(1, tr.Size())
 		assert.Equal(1, tr.root.value)
-		tr.Insert(2)
+		tr.Put(2)
 		assert.Equal(1, tr.Size())
 		assert.Equal(2, tr.root.value, "should replace existing value")
 	})
@@ -496,7 +496,7 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 		assert.Equal(1, tr.root.left.value)
 		assert.Equal(3, tr.root.right.value)
 
-		tr.Insert(4)
+		tr.Put(4)
 		assert.Equal(3, tr.Size(), "should replace oldest value")
 		assert.Equal(3, tr.root.value)
 		assert.Equal(2, tr.root.left.value)
@@ -511,7 +511,7 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 		assert.Equal(1, tr.root.left.value)
 		assert.Equal(5, tr.root.right.value)
 
-		tr.Insert(4)
+		tr.Put(4)
 		assert.Equal(3, tr.Size(), "should replace oldest value at root")
 		assert.Equal(4, tr.root.value)
 		assert.Nil(tr.root.parent)
@@ -529,10 +529,10 @@ func Test_tree_MinMax(t *testing.T) {
 
 	t.Run("single node", func(t *testing.T) {
 		tr := New[int](1)
-		tr.Insert(5)
+		tr.Put(5)
 		assert.Equal(t, 5, tr.Min())
 		assert.Equal(t, 5, tr.Max())
-		tr.Insert(6)
+		tr.Put(6)
 		assert.Equal(t, 6, tr.Min())
 		assert.Equal(t, 6, tr.Max())
 	})
@@ -545,12 +545,12 @@ func Test_tree_MinMax(t *testing.T) {
 
 	t.Run("rolling three nodes", func(t *testing.T) {
 		tr := makeTree(1, 2, 3)
-		tr.Insert(4) // replaces 1
+		tr.Put(4) // replaces 1
 		assert.Equal(t, 2, tr.Min())
 		assert.Equal(t, 4, tr.Max())
-		tr.Insert(1) // replaces 2
-		tr.Insert(2) // replaces 3
-		tr.Insert(3) // replaces 4
+		tr.Put(1) // replaces 2
+		tr.Put(2) // replaces 3
+		tr.Put(3) // replaces 4
 		assert.Equal(t, 1, tr.Min())
 		assert.Equal(t, 3, tr.Max())
 	})
@@ -568,7 +568,7 @@ func Test_tree_MinMax(t *testing.T) {
 				values = append(values, v)
 			}
 
-			tr.Insert(v)
+			tr.Put(v)
 			expectedMin := slices.Min(values)
 			expectedMax := slices.Max(values)
 			if !assert.Equal(t, expectedMin, tr.Min(), "min should match") ||
@@ -588,10 +588,10 @@ func Test_tree_MeanTss(t *testing.T) {
 
 	t.Run("single node", func(t *testing.T) {
 		tr := New[int](1)
-		tr.Insert(5)
+		tr.Put(5)
 		assert.Equal(t, 5.0, tr.Mean())
 		assert.Equal(t, 0.0, tr.TotalSumSquares())
-		tr.Insert(6)
+		tr.Put(6)
 		assert.Equal(t, 6.0, tr.Mean())
 		assert.Equal(t, 0.0, tr.TotalSumSquares())
 	})
@@ -604,16 +604,16 @@ func Test_tree_MeanTss(t *testing.T) {
 
 	t.Run("rolling three nodes", func(t *testing.T) {
 		tr := makeTree(1, 2, 3)
-		tr.Insert(4) // replaces 1
+		tr.Put(4) // replaces 1
 		assert.Equal(t, 3.0, tr.Mean())
 		assert.Equal(t, 2.0, tr.TotalSumSquares())
-		tr.Insert(5) // replaces 2
+		tr.Put(5) // replaces 2
 		assert.Equal(t, 4.0, tr.Mean())
 		assert.Equal(t, 2.0, tr.TotalSumSquares())
-		tr.Insert(0) // replaces 3
+		tr.Put(0) // replaces 3
 		assert.Equal(t, 3.0, tr.Mean())
 		assert.Equal(t, 14.0, tr.TotalSumSquares())
-		tr.Insert(10) // replaces 4
+		tr.Put(10) // replaces 4
 		assert.Equal(t, 5.0, tr.Mean())
 		assert.Equal(t, 50.0, tr.TotalSumSquares())
 	})
@@ -632,7 +632,7 @@ func Test_tree_MeanTss(t *testing.T) {
 				values = append(values, v)
 			}
 
-			tr.Insert(v)
+			tr.Put(v)
 			var sum float64
 			for _, v := range values {
 				sum += float64(v)

@@ -1,5 +1,7 @@
 package mwnd
 
+// Window aggregates a fixed number of samples. Once the capacity is reached, each new sample causes
+// the oldest sample to be evicted from the window.
 type Window[T Numeric] struct {
 	// nodes is a ring buffer of all nodes, pre-allocated to the max capacity of the tree so that
 	// memory allocations are minimized during normal operation.
@@ -18,6 +20,7 @@ type Window[T Numeric] struct {
 	size int
 }
 
+// New initializes a moving Window with the fixed capacity for samples.
 func New[T Numeric](capacity int) *Window[T] {
 	return &Window[T]{
 		nodes: make([]node[T], capacity),
@@ -26,7 +29,7 @@ func New[T Numeric](capacity int) *Window[T] {
 	}
 }
 
-func (t *Window[T]) nodeForInsert() *node[T] {
+func (t *Window[T]) nodeForPut() *node[T] {
 	next := &t.nodes[t.i]
 
 	// If the node is already in the tree, remove it.
@@ -42,10 +45,15 @@ func (t *Window[T]) nodeForInsert() *node[T] {
 	return next
 }
 
+// Size returns the current number of samples in the Window.
 func (t *Window[T]) Size() int {
 	return t.size
 }
 
+// Min returns the lowest value currently in the Window.
+// If the Window has no samples, then it returns the zero value.
+//
+// Time complexity of O(1).
 func (t *Window[T]) Min() T {
 	if t == nil || t.min == nil {
 		var zero T
@@ -55,6 +63,10 @@ func (t *Window[T]) Min() T {
 	return t.min.value
 }
 
+// Max returns the highest value currently in the Window.
+// If the Window has no samples, then it returns the zero value.
+//
+// Time complexity of O(1).
 func (t *Window[T]) Max() T {
 	if t == nil || t.max == nil {
 		var zero T
@@ -64,16 +76,30 @@ func (t *Window[T]) Max() T {
 	return t.max.value
 }
 
+// Mean returns the arithmetic mean of all samples currently in the Window.
+// If the Window has no samples, then it returns 0.0.
+//
+// Time complexity O(1).
 func (t *Window[T]) Mean() float64 {
 	return t.mean
 }
 
+// TotalSumSquares returns the total sum of squared differences from the mean of
+// all samples currently in the Window. If the Window has no samples, then it returns
+// the zero value. Divide this value by the Window [Size] for biased sample variance or
+// by ([Size]() - 1) for unbiased sample variance.
+//
+// Time complexity of O(1).
 func (t *Window[T]) TotalSumSquares() float64 {
 	return t.tss
 }
 
-func (t *Window[T]) Insert(v T) {
-	n := t.nodeForInsert()
+// Put adds a new sample to the Window. If the Window is at capacity, then the oldest sample is
+// evicted to be replaced by the new sample.
+//
+// Time complexity of O(log n), where n is the number of samples in the Window.
+func (t *Window[T]) Put(v T) {
+	n := t.nodeForPut()
 	n.value = v
 
 	// Welford's algorithm for online variance, which is a numerically stable approach.
