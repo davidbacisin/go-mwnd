@@ -1,3 +1,3 @@
 # go-mwnd
-Moving window statistics for Go. Computes mean, minimum, maximum, and standard 
-deviation over a sliding window of a fixed number of samples.
+Moving window statistics for Go. Computes mean, minimum, maximum, and total sum of squared 
+differences from the mean over a sliding window of a fixed number of samples.

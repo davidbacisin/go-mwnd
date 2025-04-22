@@ -11,6 +11,7 @@ const (
 	black, red color = false, true
 )
 
+// Numeric describes a number-like type that may be stored as a sample in a [Window].
 type Numeric interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
@@ -71,7 +72,7 @@ func (n *node[T]) sibling() *node[T] {
 	return n.parent.left
 }
 
-func (n *node[T]) grandparent_uncle() (*node[T], *node[T]) {
+func (n *node[T]) grandparentAndUncle() (*node[T], *node[T]) {
 	g := n.grandparent()
 	if g == nil {
 		return nil, nil

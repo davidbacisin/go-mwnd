@@ -41,19 +41,19 @@ func Test_node_safeColor(t *testing.T) {
 func Test_node_relationships(t *testing.T) {
 	root := &node[int]{value: 0}
 	left := &node[int]{value: 1}
-	left_left := &node[int]{value: 2}
-	left_right := &node[int]{value: 3}
+	leftLeft := &node[int]{value: 2}
+	leftRight := &node[int]{value: 3}
 	right := &node[int]{value: 4}
-	right_left := &node[int]{value: 5}
-	right_right := &node[int]{value: 6}
+	rightLeft := &node[int]{value: 5}
+	rightRight := &node[int]{value: 6}
 
 	// Link the nodes
 	root.setLeft(left)
-	left.setLeft(left_left)
-	left.setRight(left_right)
+	left.setLeft(leftLeft)
+	left.setRight(leftRight)
 	root.setRight(right)
-	right.setLeft(right_left)
-	right.setRight(right_right)
+	right.setLeft(rightLeft)
+	right.setRight(rightRight)
 
 	cases := []struct {
 		name        string
@@ -92,38 +92,38 @@ func Test_node_relationships(t *testing.T) {
 		},
 		{
 			name:        "left_left",
-			n:           left_left,
+			n:           leftLeft,
 			grandparent: root,
 			uncle:       right,
-			sibling:     left_right,
+			sibling:     leftRight,
 		},
 		{
 			name:        "left_right",
-			n:           left_right,
+			n:           leftRight,
 			grandparent: root,
 			uncle:       right,
-			sibling:     left_left,
+			sibling:     leftLeft,
 		},
 		{
 			name:        "right_left",
-			n:           right_left,
+			n:           rightLeft,
 			grandparent: root,
 			uncle:       left,
-			sibling:     right_right,
+			sibling:     rightRight,
 		},
 		{
 			name:        "right_right",
-			n:           right_right,
+			n:           rightRight,
 			grandparent: root,
 			uncle:       left,
-			sibling:     right_left,
+			sibling:     rightLeft,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			grandparent, uncle := c.n.grandparent_uncle()
+			grandparent, uncle := c.n.grandparentAndUncle()
 			sibling := c.n.sibling()
 			assert.Equal(t, c.grandparent, grandparent)
 			assert.Equal(t, c.uncle, uncle)
@@ -135,19 +135,19 @@ func Test_node_relationships(t *testing.T) {
 func Test_node_String(t *testing.T) {
 	root := &node[int]{value: 0}
 	left := &node[int]{value: 1}
-	left_left := &node[int]{value: 2}
-	left_right := &node[int]{value: 3}
+	leftLeft := &node[int]{value: 2}
+	leftRight := &node[int]{value: 3}
 	right := &node[int]{value: 4}
-	right_left := &node[int]{value: 5}
-	right_right := &node[int]{value: 6}
+	rightLeft := &node[int]{value: 5}
+	rightRight := &node[int]{value: 6}
 
 	// Link the nodes
 	root.setLeft(left)
-	left.setLeft(left_left)
-	left.setRight(left_right)
+	left.setLeft(leftLeft)
+	left.setRight(leftRight)
 	root.setRight(right)
-	right.setLeft(right_left)
-	right.setRight(right_right)
+	right.setLeft(rightLeft)
+	right.setRight(rightRight)
 
 	assert.Equal(t, "       2 \n    1 \n       3 \n 0 \n       5 \n    4 \n       6 \n", root.String())
 }

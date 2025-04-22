@@ -127,9 +127,9 @@ func (t *Window[T]) Put(v T) {
 					t.min = n
 				}
 				break
-			} else {
-				p = p.left
 			}
+
+			p = p.left
 		} else {
 			if p.right == nil {
 				p.setRight(n)
@@ -138,9 +138,9 @@ func (t *Window[T]) Put(v T) {
 					t.max = n
 				}
 				break
-			} else {
-				p = p.right
 			}
+
+			p = p.right
 		}
 	}
 
@@ -161,7 +161,7 @@ func (t *Window[T]) rebalanceForInsert(n *node[T]) {
 	}
 
 	// Case 3
-	g, u := n.grandparent_uncle()
+	g, u := n.grandparentAndUncle()
 	if u.safeColor() == red {
 		p.color = black
 		u.color = black
@@ -191,16 +191,16 @@ func (t *Window[T]) rebalanceForInsert(n *node[T]) {
 	}
 }
 
-func (t *Window[T]) replace(old, new *node[T]) {
+func (t *Window[T]) replace(old, n *node[T]) {
 	if old.parent == nil {
-		t.root = new
-		if new != nil {
-			new.parent = nil
+		t.root = n
+		if n != nil {
+			n.parent = nil
 		}
 	} else if old == old.parent.left {
-		old.parent.setLeft(new)
+		old.parent.setLeft(n)
 	} else {
-		old.parent.setRight(new)
+		old.parent.setRight(n)
 	}
 }
 
