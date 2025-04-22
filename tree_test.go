@@ -1,4 +1,4 @@
-package mwndtree
+package mwnd
 
 import (
 	"math/rand/v2"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func makeTree(values ...int) *tree[int] {
+func makeTree(values ...int) *Window[int] {
 	tr := New[int](len(values))
 	for _, v := range values {
 		tr.Insert(v)
@@ -64,7 +64,7 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (blackCou
 	return blackCount, ok
 }
 
-func assertRedBlackProperties[T Numeric](t *testing.T, tr *tree[T]) bool {
+func assertRedBlackProperties[T Numeric](t *testing.T, tr *Window[T]) bool {
 	_, ok := assertRedBlackPropertiesNode(t, tr.root)
 	return ok
 }

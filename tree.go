@@ -1,6 +1,6 @@
-package mwndtree
+package mwnd
 
-type tree[T Numeric] struct {
+type Window[T Numeric] struct {
 	// nodes is a ring buffer of all nodes, pre-allocated to the max capacity of the tree so that
 	// memory allocations are minimized during normal operation.
 	nodes          []node[T]
@@ -18,15 +18,15 @@ type tree[T Numeric] struct {
 	size int
 }
 
-func New[T Numeric](capacity int) *tree[T] {
-	return &tree[T]{
+func New[T Numeric](capacity int) *Window[T] {
+	return &Window[T]{
 		nodes: make([]node[T], capacity),
 		i:     0,
 		size:  0,
 	}
 }
 
-func (t *tree[T]) nodeForInsert() *node[T] {
+func (t *Window[T]) nodeForInsert() *node[T] {
 	next := &t.nodes[t.i]
 
 	// If the node is already in the tree, remove it.
@@ -42,11 +42,11 @@ func (t *tree[T]) nodeForInsert() *node[T] {
 	return next
 }
 
-func (t *tree[T]) Size() int {
+func (t *Window[T]) Size() int {
 	return t.size
 }
 
-func (t *tree[T]) Min() T {
+func (t *Window[T]) Min() T {
 	if t == nil || t.min == nil {
 		var zero T
 		return zero
@@ -55,7 +55,7 @@ func (t *tree[T]) Min() T {
 	return t.min.value
 }
 
-func (t *tree[T]) Max() T {
+func (t *Window[T]) Max() T {
 	if t == nil || t.max == nil {
 		var zero T
 		return zero
@@ -64,15 +64,15 @@ func (t *tree[T]) Max() T {
 	return t.max.value
 }
 
-func (t *tree[T]) Mean() float64 {
+func (t *Window[T]) Mean() float64 {
 	return t.mean
 }
 
-func (t *tree[T]) TotalSumSquares() float64 {
+func (t *Window[T]) TotalSumSquares() float64 {
 	return t.tss
 }
 
-func (t *tree[T]) Insert(v T) {
+func (t *Window[T]) Insert(v T) {
 	n := t.nodeForInsert()
 	n.value = v
 
@@ -121,7 +121,7 @@ func (t *tree[T]) Insert(v T) {
 	t.rebalanceForInsert(n)
 }
 
-func (t *tree[T]) rebalanceForInsert(n *node[T]) {
+func (t *Window[T]) rebalanceForInsert(n *node[T]) {
 	p := n.parent
 	// Case 1
 	if p == nil {
@@ -165,7 +165,7 @@ func (t *tree[T]) rebalanceForInsert(n *node[T]) {
 	}
 }
 
-func (t *tree[T]) replace(old, new *node[T]) {
+func (t *Window[T]) replace(old, new *node[T]) {
 	if old.parent == nil {
 		t.root = new
 		if new != nil {
@@ -178,7 +178,7 @@ func (t *tree[T]) replace(old, new *node[T]) {
 	}
 }
 
-func (t *tree[T]) swap(a, b *node[T]) {
+func (t *Window[T]) swap(a, b *node[T]) {
 	if a == b || a == nil || b == nil {
 		return
 	}
@@ -224,21 +224,21 @@ func (t *tree[T]) swap(a, b *node[T]) {
 	}
 }
 
-func (t *tree[T]) rotateLeft(n *node[T]) {
+func (t *Window[T]) rotateLeft(n *node[T]) {
 	r := n.right
 	t.replace(n, r)
 	n.setRight(r.left)
 	r.setLeft(n)
 }
 
-func (t *tree[T]) rotateRight(n *node[T]) {
+func (t *Window[T]) rotateRight(n *node[T]) {
 	l := n.left
 	t.replace(n, l)
 	n.setLeft(l.right)
 	l.setRight(n)
 }
 
-func (t *tree[T]) delete(n *node[T]) {
+func (t *Window[T]) delete(n *node[T]) {
 	if n == nil {
 		return
 	}
@@ -305,7 +305,7 @@ func (t *tree[T]) delete(n *node[T]) {
 	n.right = nil
 }
 
-func (t *tree[T]) rebalanceForDelete(n *node[T]) {
+func (t *Window[T]) rebalanceForDelete(n *node[T]) {
 	p := n.parent
 	// Case 1
 	if p == nil {

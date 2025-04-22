@@ -1,4 +1,4 @@
-package mwndtree
+package mwnd
 
 import (
 	"fmt"
