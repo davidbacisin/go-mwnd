@@ -1,10 +1,6 @@
 package mwnd
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+import "testing"
 
 func Test_node_safeColor(t *testing.T) {
 	cases := []struct {
@@ -33,7 +29,7 @@ func Test_node_safeColor(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			actual := c.node.safeColor()
-			assert.Equal(t, c.expected, actual)
+			assertEqual(t, c.expected, actual)
 		})
 	}
 }
@@ -125,9 +121,9 @@ func Test_node_relationships(t *testing.T) {
 			t.Parallel()
 			grandparent, uncle := c.n.grandparentAndUncle()
 			sibling := c.n.sibling()
-			assert.Equal(t, c.grandparent, grandparent)
-			assert.Equal(t, c.uncle, uncle)
-			assert.Equal(t, c.sibling, sibling)
+			assertEqual(t, c.grandparent, grandparent)
+			assertEqual(t, c.uncle, uncle)
+			assertEqual(t, c.sibling, sibling)
 		})
 	}
 }
@@ -149,5 +145,5 @@ func Test_node_String(t *testing.T) {
 	right.setLeft(rightLeft)
 	right.setRight(rightRight)
 
-	assert.Equal(t, "       2 \n    1 \n       3 \n 0 \n       5 \n    4 \n       6 \n", root.String())
+	assertEqual(t, "       2 \n    1 \n       3 \n 0 \n       5 \n    4 \n       6 \n", root.String())
 }

@@ -4,8 +4,6 @@ import (
 	"math/rand/v2"
 	"slices"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func makeTree(values ...int) *Window[int] {
@@ -24,7 +22,7 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (blackCou
 	var leftBlackCount, rightBlackCount int
 
 	if n.left != nil {
-		if !assert.Less(t, n.left.value, n.value, "left child should have a lesser value than parent") {
+		if !assertLess(t, n.left.value, n.value, "left child should have a lesser value than parent") {
 			return blackCount, false
 		}
 
@@ -36,7 +34,7 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (blackCou
 	}
 
 	if n.right != nil {
-		ok = ok && assert.GreaterOrEqual(t, n.right.value, n.value, "right child should have a greater or equal value to parent")
+		ok = ok && assertLess(t, n.value, n.right.value, "right child should have a greater or equal value to parent")
 
 		rightCount, rightOk := assertRedBlackPropertiesNode(t, n.left)
 		rightBlackCount = rightCount
@@ -46,11 +44,11 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (blackCou
 	}
 
 	// Red-black properties
-	assert.Equal(t, leftBlackCount, rightBlackCount, "should have equal number of black nodes to each leaf")
+	assertEqual(t, leftBlackCount, rightBlackCount, "should have equal number of black nodes to each leaf")
 
 	if n.safeColor() == red {
-		ok = ok && assert.Equal(t, black, n.left.safeColor(), "red node should have black left child")
-		ok = ok && assert.Equal(t, black, n.right.safeColor(), "red node should have black right child")
+		ok = ok && assertEqual(t, black, n.left.safeColor(), "red node should have black left child")
+		ok = ok && assertEqual(t, black, n.right.safeColor(), "red node should have black right child")
 	}
 
 	if n.left.safeColor() == black {
@@ -71,78 +69,76 @@ func assertRedBlackProperties[T Numeric](t *testing.T, tr *Window[T]) bool {
 
 func Test_tree_Insert(t *testing.T) {
 	t.Run("fully worked example", func(t *testing.T) {
-		assert := assert.New(t)
-
 		tr := New[int](11)
-		assert.Equal(0, tr.Size())
+		assertEqual(t, 0, tr.Size())
 
 		tr.Put(1)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(1, tr.root.value, "should insert root")
+		assertEqual(t, 1, tr.root.value, "should insert root")
 
 		tr.Put(22)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(22, tr.root.right.value, "should insert child")
+		assertEqual(t, 22, tr.root.right.value, "should insert child")
 
 		tr.Put(27)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(22, tr.root.value, "should rotate left")
-		assert.Equal(1, tr.root.left.value, "should rotate left")
-		assert.Equal(27, tr.root.right.value, "should rotate left")
+		assertEqual(t, 22, tr.root.value, "should rotate left")
+		assertEqual(t, 1, tr.root.left.value, "should rotate left")
+		assertEqual(t, 27, tr.root.right.value, "should rotate left")
 
 		tr.Put(15)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(22, tr.root.value)
-		assert.Equal(1, tr.root.left.value)
-		assert.Equal(15, tr.root.left.right.value)
+		assertEqual(t, 22, tr.root.value)
+		assertEqual(t, 1, tr.root.left.value)
+		assertEqual(t, 15, tr.root.left.right.value)
 
 		tr.Put(6)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(22, tr.root.value)
-		assert.Equal(6, tr.root.left.value, "should rotate right then left")
-		assert.Equal(1, tr.root.left.left.value, "should rotate right then left")
-		assert.Equal(15, tr.root.left.right.value, "should rotate right then left")
-		assert.Equal(red, tr.root.left.right.color)
+		assertEqual(t, 22, tr.root.value)
+		assertEqual(t, 6, tr.root.left.value, "should rotate right then left")
+		assertEqual(t, 1, tr.root.left.left.value, "should rotate right then left")
+		assertEqual(t, 15, tr.root.left.right.value, "should rotate right then left")
+		assertEqual(t, red, tr.root.left.right.color)
 
 		tr.Put(11)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(22, tr.root.value)
-		assert.Equal(6, tr.root.left.value)
-		assert.Equal(15, tr.root.left.right.value)
-		assert.Equal(black, tr.root.left.right.color, "should recolor 15")
-		assert.Equal(11, tr.root.left.right.left.value)
+		assertEqual(t, 22, tr.root.value)
+		assertEqual(t, 6, tr.root.left.value)
+		assertEqual(t, 15, tr.root.left.right.value)
+		assertEqual(t, black, tr.root.left.right.color, "should recolor 15")
+		assertEqual(t, 11, tr.root.left.right.left.value)
 
 		tr.Put(17)
 		assertRedBlackProperties(t, tr)
 
 		tr.Put(25)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(22, tr.root.value)
-		assert.Equal(27, tr.root.right.value)
-		assert.Equal(25, tr.root.right.left.value)
+		assertEqual(t, 22, tr.root.value)
+		assertEqual(t, 27, tr.root.right.value)
+		assertEqual(t, 25, tr.root.right.left.value)
 
 		tr.Put(13)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(15, tr.root.value, "should rotate 15 up to root")
-		assert.Equal(6, tr.root.left.value, "should rotate 15 up to root")
-		assert.Equal(1, tr.root.left.left.value, "should rotate 15 up to root")
-		assert.Equal(11, tr.root.left.right.value, "should rotate 15 up to root")
-		assert.Equal(13, tr.root.left.right.right.value, "should rotate 15 up to root")
-		assert.Equal(22, tr.root.right.value, "should rotate 15 up to root")
-		assert.Equal(17, tr.root.right.left.value, "should rotate 15 up to root")
-		assert.Equal(27, tr.root.right.right.value, "should rotate 15 up to root")
+		assertEqual(t, 15, tr.root.value, "should rotate 15 up to root")
+		assertEqual(t, 6, tr.root.left.value, "should rotate 15 up to root")
+		assertEqual(t, 1, tr.root.left.left.value, "should rotate 15 up to root")
+		assertEqual(t, 11, tr.root.left.right.value, "should rotate 15 up to root")
+		assertEqual(t, 13, tr.root.left.right.right.value, "should rotate 15 up to root")
+		assertEqual(t, 22, tr.root.right.value, "should rotate 15 up to root")
+		assertEqual(t, 17, tr.root.right.left.value, "should rotate 15 up to root")
+		assertEqual(t, 27, tr.root.right.right.value, "should rotate 15 up to root")
 
 		tr.Put(8)
 		assertRedBlackProperties(t, tr)
 
 		tr.Put(1)
 		assertRedBlackProperties(t, tr)
-		assert.Equal(15, tr.root.value)
-		assert.Equal(6, tr.root.left.value)
-		assert.Equal(1, tr.root.left.left.value)
-		assert.Equal(1, tr.root.left.left.right.value, "should insert duplicates to the right")
+		assertEqual(t, 15, tr.root.value)
+		assertEqual(t, 6, tr.root.left.value)
+		assertEqual(t, 1, tr.root.left.left.value)
+		assertEqual(t, 1, tr.root.left.left.right.value, "should insert duplicates to the right")
 
-		assert.Equal(11, tr.Size(), "should reach its capacity")
+		assertEqual(t, 11, tr.Size(), "should reach its capacity")
 	})
 
 	t.Run("random tree", func(t *testing.T) {
@@ -161,21 +157,21 @@ func Test_tree_swap(t *testing.T) {
 	t.Run("nil and nil", func(t *testing.T) {
 		tr := New[int](10)
 		tr.swap(nil, nil)
-		assert.Equal(t, 0, tr.Size())
+		assertEqual(t, 0, tr.Size())
 	})
 
 	t.Run("root with itself", func(t *testing.T) {
 		tr := New[int](10)
 		tr.root = &node[int]{value: 1}
 		tr.swap(tr.root, tr.root)
-		assert.Equal(t, 1, tr.root.value)
+		assertEqual(t, 1, tr.root.value)
 	})
 
 	t.Run("root with nil", func(t *testing.T) {
 		tr := New[int](10)
 		tr.root = &node[int]{value: 1}
 		tr.swap(tr.root, nil)
-		assert.Equal(t, 1, tr.root.value)
+		assertEqual(t, 1, tr.root.value)
 	})
 
 	t.Run("root with left", func(t *testing.T) {
@@ -192,11 +188,11 @@ func Test_tree_swap(t *testing.T) {
 		n2.setRight(n3)
 
 		tr.swap(tr.root, tr.root.left)
-		assert.Equal(t, n2, tr.root)
-		assert.Equal(t, n4, tr.root.left)
-		assert.Equal(t, n1, tr.root.left.left)
-		assert.Equal(t, n3, tr.root.left.right)
-		assert.Equal(t, n5, tr.root.right)
+		assertEqual(t, n2, tr.root)
+		assertEqual(t, n4, tr.root.left)
+		assertEqual(t, n1, tr.root.left.left)
+		assertEqual(t, n3, tr.root.left.right)
+		assertEqual(t, n5, tr.root.right)
 	})
 
 	t.Run("root with right", func(t *testing.T) {
@@ -213,11 +209,11 @@ func Test_tree_swap(t *testing.T) {
 		n4.setRight(n5)
 
 		tr.swap(tr.root, tr.root.right)
-		assert.Equal(t, n4, tr.root)
-		assert.Equal(t, n1, tr.root.left)
-		assert.Equal(t, n2, tr.root.right)
-		assert.Equal(t, n3, tr.root.right.left)
-		assert.Equal(t, n5, tr.root.right.right)
+		assertEqual(t, n4, tr.root)
+		assertEqual(t, n1, tr.root.left)
+		assertEqual(t, n2, tr.root.right)
+		assertEqual(t, n3, tr.root.right.left)
+		assertEqual(t, n5, tr.root.right.right)
 	})
 
 	t.Run("root with left left", func(t *testing.T) {
@@ -238,13 +234,13 @@ func Test_tree_swap(t *testing.T) {
 		n2.setRight(n3)
 
 		tr.swap(tr.root, tr.root.left.left)
-		assert.Equal(t, n2, tr.root)
-		assert.Equal(t, n4, tr.root.left)
-		assert.Equal(t, n7, tr.root.right)
-		assert.Equal(t, n6, tr.root.left.left)
-		assert.Equal(t, n5, tr.root.left.right)
-		assert.Equal(t, n1, tr.root.left.left.left)
-		assert.Equal(t, n3, tr.root.left.left.right)
+		assertEqual(t, n2, tr.root)
+		assertEqual(t, n4, tr.root.left)
+		assertEqual(t, n7, tr.root.right)
+		assertEqual(t, n6, tr.root.left.left)
+		assertEqual(t, n5, tr.root.left.right)
+		assertEqual(t, n1, tr.root.left.left.left)
+		assertEqual(t, n3, tr.root.left.left.right)
 	})
 
 	t.Run("root with left right", func(t *testing.T) {
@@ -265,13 +261,13 @@ func Test_tree_swap(t *testing.T) {
 		n2.setRight(n3)
 
 		tr.swap(tr.root, tr.root.left.right)
-		assert.Equal(t, n5, tr.root)
-		assert.Equal(t, n4, tr.root.left)
-		assert.Equal(t, n7, tr.root.right)
-		assert.Equal(t, n2, tr.root.left.left)
-		assert.Equal(t, n6, tr.root.left.right)
-		assert.Equal(t, n1, tr.root.left.left.left)
-		assert.Equal(t, n3, tr.root.left.left.right)
+		assertEqual(t, n5, tr.root)
+		assertEqual(t, n4, tr.root.left)
+		assertEqual(t, n7, tr.root.right)
+		assertEqual(t, n2, tr.root.left.left)
+		assertEqual(t, n6, tr.root.left.right)
+		assertEqual(t, n1, tr.root.left.left.left)
+		assertEqual(t, n3, tr.root.left.left.right)
 	})
 
 	t.Run("left with grandchild", func(t *testing.T) {
@@ -292,13 +288,13 @@ func Test_tree_swap(t *testing.T) {
 		n2.setRight(n3)
 
 		tr.swap(n4, n1)
-		assert.Equal(t, n6, tr.root)
-		assert.Equal(t, n1, tr.root.left)
-		assert.Equal(t, n7, tr.root.right)
-		assert.Equal(t, n2, tr.root.left.left)
-		assert.Equal(t, n5, tr.root.left.right)
-		assert.Equal(t, n4, tr.root.left.left.left)
-		assert.Equal(t, n3, tr.root.left.left.right)
+		assertEqual(t, n6, tr.root)
+		assertEqual(t, n1, tr.root.left)
+		assertEqual(t, n7, tr.root.right)
+		assertEqual(t, n2, tr.root.left.left)
+		assertEqual(t, n5, tr.root.left.right)
+		assertEqual(t, n4, tr.root.left.left.left)
+		assertEqual(t, n3, tr.root.left.left.right)
 	})
 
 	t.Run("right with grandchild", func(t *testing.T) {
@@ -319,240 +315,230 @@ func Test_tree_swap(t *testing.T) {
 		n6.setRight(n7)
 
 		tr.swap(n4, n7)
-		assert.Equal(t, n2, tr.root)
-		assert.Equal(t, n1, tr.root.left)
-		assert.Equal(t, n7, tr.root.right)
-		assert.Equal(t, n3, tr.root.right.left)
-		assert.Equal(t, n6, tr.root.right.right)
-		assert.Equal(t, n5, tr.root.right.right.left)
-		assert.Equal(t, n4, tr.root.right.right.right)
+		assertEqual(t, n2, tr.root)
+		assertEqual(t, n1, tr.root.left)
+		assertEqual(t, n7, tr.root.right)
+		assertEqual(t, n3, tr.root.right.left)
+		assertEqual(t, n6, tr.root.right.right)
+		assertEqual(t, n5, tr.root.right.right.left)
+		assertEqual(t, n4, tr.root.right.right.right)
 	})
 }
 
 func Test_tree_delete(t *testing.T) {
 	t.Run("remove leaf, no rotate", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root.left.left
-		assert.Equal(1, p.value)
+		assertEqual(t, 1, p.value)
 		n := p.right
-		assert.Equal(1, n.value)
+		assertEqual(t, 1, n.value)
 		tr.delete(n)
-		assert.Equal(10, tr.Size())
+		assertEqual(t, 10, tr.Size())
 		assertRedBlackProperties(t, tr)
-		assert.Nil(n.parent)
-		assert.Nil(n.left)
-		assert.Nil(n.right)
-		assert.Nil(p.left)
-		assert.Nil(p.right)
+		assertNil(t, n.parent)
+		assertNil(t, n.left)
+		assertNil(t, n.right)
+		assertNil(t, p.left)
+		assertNil(t, p.right)
 	})
 
 	t.Run("replace parent with child; case 4", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root.right
-		assert.Equal(22, p.value)
+		assertEqual(t, 22, p.value)
 		n := p.right
-		assert.Equal(27, n.value)
+		assertEqual(t, 27, n.value)
 		tr.delete(n)
-		assert.Equal(10, tr.Size())
+		assertEqual(t, 10, tr.Size())
 		assertRedBlackProperties(t, tr)
-		assert.Nil(n.parent)
-		assert.Nil(n.left)
-		assert.Nil(n.right)
-		assert.Equal(17, p.left.value)
-		assert.Equal(25, p.right.value)
+		assertNil(t, n.parent)
+		assertNil(t, n.left)
+		assertNil(t, n.right)
+		assertEqual(t, 17, p.left.value)
+		assertEqual(t, 25, p.right.value)
 	})
 
 	t.Run("remove parent with two children; cases 5 right and 6 left", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root
-		assert.Equal(15, p.value)
+		assertEqual(t, 15, p.value)
 		n := p.right
-		assert.Equal(22, n.value)
+		assertEqual(t, 22, n.value)
 		tr.delete(n)
-		assert.Equal(10, tr.Size())
+		assertEqual(t, 10, tr.Size())
 		assertRedBlackProperties(t, tr)
-		assert.Nil(n.parent)
-		assert.Nil(n.left)
-		assert.Nil(n.right)
-		assert.Equal(tr.root, p, "should keep 15 at root")
-		assert.Equal(25, p.right.value)
-		assert.Equal(17, p.right.left.value)
-		assert.Equal(27, p.right.right.value)
+		assertNil(t, n.parent)
+		assertNil(t, n.left)
+		assertNil(t, n.right)
+		assertEqual(t, tr.root, p, "should keep 15 at root")
+		assertEqual(t, 25, p.right.value)
+		assertEqual(t, 17, p.right.left.value)
+		assertEqual(t, 27, p.right.right.value)
 	})
 
 	t.Run("case 3 rotate left", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(5, 8, 1, 7, 9, 6)
 
 		p := tr.root
-		assert.Equal(5, p.value)
+		assertEqual(t, 5, p.value)
 		n := p.left
-		assert.Equal(1, n.value)
+		assertEqual(t, 1, n.value)
 		tr.delete(n)
 		assertRedBlackProperties(t, tr)
-		assert.Nil(n.parent)
-		assert.Nil(n.left)
-		assert.Nil(n.right)
-		assert.Equal(8, tr.root.value)
-		assert.Equal(6, tr.root.left.value)
-		assert.Equal(9, tr.root.right.value)
-		assert.Equal(5, tr.root.left.left.value)
-		assert.Equal(7, tr.root.left.right.value)
+		assertNil(t, n.parent)
+		assertNil(t, n.left)
+		assertNil(t, n.right)
+		assertEqual(t, 8, tr.root.value)
+		assertEqual(t, 6, tr.root.left.value)
+		assertEqual(t, 9, tr.root.right.value)
+		assertEqual(t, 5, tr.root.left.left.value)
+		assertEqual(t, 7, tr.root.left.right.value)
 	})
 
 	t.Run("case 3 rotate left", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(5, 8, 1, 7, 9, 6)
 
 		p := tr.root
-		assert.Equal(5, p.value)
+		assertEqual(t, 5, p.value)
 		n := p.left
-		assert.Equal(1, n.value)
+		assertEqual(t, 1, n.value)
 		tr.delete(n)
 		assertRedBlackProperties(t, tr)
-		assert.Nil(n.parent)
-		assert.Nil(n.left)
-		assert.Nil(n.right)
-		assert.Equal(8, tr.root.value)
-		assert.Equal(6, tr.root.left.value)
-		assert.Equal(9, tr.root.right.value)
-		assert.Equal(5, tr.root.left.left.value)
-		assert.Equal(7, tr.root.left.right.value)
+		assertNil(t, n.parent)
+		assertNil(t, n.left)
+		assertNil(t, n.right)
+		assertEqual(t, 8, tr.root.value)
+		assertEqual(t, 6, tr.root.left.value)
+		assertEqual(t, 9, tr.root.right.value)
+		assertEqual(t, 5, tr.root.left.left.value)
+		assertEqual(t, 7, tr.root.left.right.value)
 	})
 
 	t.Run("case 3 rotate right", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(5, 8, 2, 1, 3, 4)
 
 		p := tr.root
-		assert.Equal(5, p.value)
+		assertEqual(t, 5, p.value)
 		n := p.right
-		assert.Equal(8, n.value)
+		assertEqual(t, 8, n.value)
 		tr.delete(n)
 		assertRedBlackProperties(t, tr)
-		assert.Nil(n.parent)
-		assert.Nil(n.left)
-		assert.Nil(n.right)
-		assert.Equal(2, tr.root.value)
-		assert.Equal(1, tr.root.left.value)
-		assert.Equal(4, tr.root.right.value)
-		assert.Equal(3, tr.root.right.left.value)
-		assert.Equal(5, tr.root.right.right.value)
+		assertNil(t, n.parent)
+		assertNil(t, n.left)
+		assertNil(t, n.right)
+		assertEqual(t, 2, tr.root.value)
+		assertEqual(t, 1, tr.root.left.value)
+		assertEqual(t, 4, tr.root.right.value)
+		assertEqual(t, 3, tr.root.right.left.value)
+		assertEqual(t, 5, tr.root.right.right.value)
 	})
 
 	t.Run("case 2", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(5, 2, 8, 6)
 
 		p := tr.root
-		assert.Equal(5, p.value)
+		assertEqual(t, 5, p.value)
 		n := p.left
-		assert.Equal(2, n.value)
+		assertEqual(t, 2, n.value)
 
 		// Delete the 6 to get the tree in the correct state
 		n6 := p.right.left
-		assert.Equal(6, n6.value)
+		assertEqual(t, 6, n6.value)
 		tr.delete(n6)
 
-		assert.Equal(black, p.color)
-		assert.Equal(black, n.color)
-		assert.Equal(black, p.right.color)
+		assertEqual(t, black, p.color)
+		assertEqual(t, black, n.color)
+		assertEqual(t, black, p.right.color)
 
 		// Now it will trigger delete case 2
 		tr.delete(n)
 		assertRedBlackProperties(t, tr)
-		assert.Nil(n.parent)
-		assert.Nil(n.left)
-		assert.Nil(n.right)
-		assert.Equal(5, tr.root.value)
-		assert.Nil(tr.root.left)
-		assert.Equal(8, tr.root.right.value)
+		assertNil(t, n.parent)
+		assertNil(t, n.left)
+		assertNil(t, n.right)
+		assertEqual(t, 5, tr.root.value)
+		assertNil(t, tr.root.left)
+		assertEqual(t, 8, tr.root.right.value)
 	})
 }
 
 func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 	t.Run("single node", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := New[int](1)
 		tr.Put(1)
-		assert.Equal(1, tr.Size())
-		assert.Equal(1, tr.root.value)
+		assertEqual(t, 1, tr.Size())
+		assertEqual(t, 1, tr.root.value)
 		tr.Put(2)
-		assert.Equal(1, tr.Size())
-		assert.Equal(2, tr.root.value, "should replace existing value")
+		assertEqual(t, 1, tr.Size())
+		assertEqual(t, 2, tr.root.value, "should replace existing value")
 	})
 
 	t.Run("three nodes", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(1, 2, 3)
-		assert.Equal(3, tr.Size())
-		assert.Equal(2, tr.root.value)
-		assert.Equal(1, tr.root.left.value)
-		assert.Equal(3, tr.root.right.value)
+		assertEqual(t, 3, tr.Size())
+		assertEqual(t, 2, tr.root.value)
+		assertEqual(t, 1, tr.root.left.value)
+		assertEqual(t, 3, tr.root.right.value)
 
 		tr.Put(4)
-		assert.Equal(3, tr.Size(), "should replace oldest value")
-		assert.Equal(3, tr.root.value)
-		assert.Equal(2, tr.root.left.value)
-		assert.Equal(4, tr.root.right.value)
+		assertEqual(t, 3, tr.Size(), "should replace oldest value")
+		assertEqual(t, 3, tr.root.value)
+		assertEqual(t, 2, tr.root.left.value)
+		assertEqual(t, 4, tr.root.right.value)
 	})
 
 	t.Run("three nodes replace root", func(t *testing.T) {
-		assert := assert.New(t)
 		tr := makeTree(3, 1, 5)
-		assert.Equal(3, tr.Size())
-		assert.Equal(3, tr.root.value)
-		assert.Equal(1, tr.root.left.value)
-		assert.Equal(5, tr.root.right.value)
+		assertEqual(t, 3, tr.Size())
+		assertEqual(t, 3, tr.root.value)
+		assertEqual(t, 1, tr.root.left.value)
+		assertEqual(t, 5, tr.root.right.value)
 
 		tr.Put(4)
-		assert.Equal(3, tr.Size(), "should replace oldest value at root")
-		assert.Equal(4, tr.root.value)
-		assert.Nil(tr.root.parent)
-		assert.Equal(1, tr.root.left.value)
-		assert.Equal(5, tr.root.right.value)
+		assertEqual(t, 3, tr.Size(), "should replace oldest value at root")
+		assertEqual(t, 4, tr.root.value)
+		assertNil(t, tr.root.parent)
+		assertEqual(t, 1, tr.root.left.value)
+		assertEqual(t, 5, tr.root.right.value)
 	})
 }
 
 func Test_tree_MinMax(t *testing.T) {
 	t.Run("empty tree", func(t *testing.T) {
 		tr := New[int](1)
-		assert.Equal(t, 0, tr.Min())
-		assert.Equal(t, 0, tr.Max())
+		assertEqual(t, 0, tr.Min())
+		assertEqual(t, 0, tr.Max())
 	})
 
 	t.Run("single node", func(t *testing.T) {
 		tr := New[int](1)
 		tr.Put(5)
-		assert.Equal(t, 5, tr.Min())
-		assert.Equal(t, 5, tr.Max())
+		assertEqual(t, 5, tr.Min())
+		assertEqual(t, 5, tr.Max())
 		tr.Put(6)
-		assert.Equal(t, 6, tr.Min())
-		assert.Equal(t, 6, tr.Max())
+		assertEqual(t, 6, tr.Min())
+		assertEqual(t, 6, tr.Max())
 	})
 
 	t.Run("three nodes", func(t *testing.T) {
 		tr := makeTree(2, 1, 3)
-		assert.Equal(t, 1, tr.Min())
-		assert.Equal(t, 3, tr.Max())
+		assertEqual(t, 1, tr.Min())
+		assertEqual(t, 3, tr.Max())
 	})
 
 	t.Run("rolling three nodes", func(t *testing.T) {
 		tr := makeTree(1, 2, 3)
 		tr.Put(4) // replaces 1
-		assert.Equal(t, 2, tr.Min())
-		assert.Equal(t, 4, tr.Max())
+		assertEqual(t, 2, tr.Min())
+		assertEqual(t, 4, tr.Max())
 		tr.Put(1) // replaces 2
 		tr.Put(2) // replaces 3
 		tr.Put(3) // replaces 4
-		assert.Equal(t, 1, tr.Min())
-		assert.Equal(t, 3, tr.Max())
+		assertEqual(t, 1, tr.Min())
+		assertEqual(t, 3, tr.Max())
 	})
 
 	t.Run("rolling 50 nodes random", func(t *testing.T) {
@@ -571,8 +557,8 @@ func Test_tree_MinMax(t *testing.T) {
 			tr.Put(v)
 			expectedMin := slices.Min(values)
 			expectedMax := slices.Max(values)
-			if !assert.Equal(t, expectedMin, tr.Min(), "min should match") ||
-				!assert.Equal(t, expectedMax, tr.Max(), "max should match") {
+			if !assertEqual(t, expectedMin, tr.Min(), "min should match") ||
+				!assertEqual(t, expectedMax, tr.Max(), "max should match") {
 				break
 			}
 		}
@@ -582,40 +568,40 @@ func Test_tree_MinMax(t *testing.T) {
 func Test_tree_MeanTss(t *testing.T) {
 	t.Run("empty tree", func(t *testing.T) {
 		tr := New[int](1)
-		assert.Equal(t, 0.0, tr.Mean())
-		assert.Equal(t, 0.0, tr.TotalSumSquares())
+		assertEqual(t, 0.0, tr.Mean())
+		assertEqual(t, 0.0, tr.TotalSumSquares())
 	})
 
 	t.Run("single node", func(t *testing.T) {
 		tr := New[int](1)
 		tr.Put(5)
-		assert.Equal(t, 5.0, tr.Mean())
-		assert.Equal(t, 0.0, tr.TotalSumSquares())
+		assertEqual(t, 5.0, tr.Mean())
+		assertEqual(t, 0.0, tr.TotalSumSquares())
 		tr.Put(6)
-		assert.Equal(t, 6.0, tr.Mean())
-		assert.Equal(t, 0.0, tr.TotalSumSquares())
+		assertEqual(t, 6.0, tr.Mean())
+		assertEqual(t, 0.0, tr.TotalSumSquares())
 	})
 
 	t.Run("three nodes", func(t *testing.T) {
 		tr := makeTree(2, 1, 3)
-		assert.Equal(t, 2.0, tr.Mean())
-		assert.Equal(t, 2.0, tr.TotalSumSquares())
+		assertEqual(t, 2.0, tr.Mean())
+		assertEqual(t, 2.0, tr.TotalSumSquares())
 	})
 
 	t.Run("rolling three nodes", func(t *testing.T) {
 		tr := makeTree(1, 2, 3)
 		tr.Put(4) // replaces 1
-		assert.Equal(t, 3.0, tr.Mean())
-		assert.Equal(t, 2.0, tr.TotalSumSquares())
+		assertEqual(t, 3.0, tr.Mean())
+		assertEqual(t, 2.0, tr.TotalSumSquares())
 		tr.Put(5) // replaces 2
-		assert.Equal(t, 4.0, tr.Mean())
-		assert.Equal(t, 2.0, tr.TotalSumSquares())
+		assertEqual(t, 4.0, tr.Mean())
+		assertEqual(t, 2.0, tr.TotalSumSquares())
 		tr.Put(0) // replaces 3
-		assert.Equal(t, 3.0, tr.Mean())
-		assert.Equal(t, 14.0, tr.TotalSumSquares())
+		assertEqual(t, 3.0, tr.Mean())
+		assertEqual(t, 14.0, tr.TotalSumSquares())
 		tr.Put(10) // replaces 4
-		assert.Equal(t, 5.0, tr.Mean())
-		assert.Equal(t, 50.0, tr.TotalSumSquares())
+		assertEqual(t, 5.0, tr.Mean())
+		assertEqual(t, 50.0, tr.TotalSumSquares())
 	})
 
 	t.Run("rolling 50 nodes random", func(t *testing.T) {
@@ -647,8 +633,8 @@ func Test_tree_MeanTss(t *testing.T) {
 			}
 
 			// expectedTss can be rather large, so the allowed error delta is adjusted accordingly
-			if !assert.InDelta(t, expectedMean, tr.Mean(), 1e-6, "mean should be within error delta") ||
-				!assert.InDelta(t, expectedTss, tr.TotalSumSquares(), expectedTss*1e-12, "tss should be within error delta") {
+			if !assertInDelta(t, expectedMean, tr.Mean(), 1e-6, "mean should be within error delta") ||
+				!assertInDelta(t, expectedTss, tr.TotalSumSquares(), expectedTss*1e-12, "tss should be within error delta") {
 				break
 			}
 		}
