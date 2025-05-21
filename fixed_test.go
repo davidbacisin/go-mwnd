@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func makeTree(values ...int) *Window[int] {
-	tr := New[int](len(values))
+func makeTree(values ...int) *fixed[int] {
+	tr := Fixed[int](len(values))
 	for _, v := range values {
 		tr.Put(v)
 	}
@@ -62,14 +62,14 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (blackCou
 	return blackCount, ok
 }
 
-func assertRedBlackProperties[T Numeric](t *testing.T, tr *Window[T]) bool {
+func assertRedBlackProperties[T Numeric](t *testing.T, tr *fixed[T]) bool {
 	_, ok := assertRedBlackPropertiesNode(t, tr.root)
 	return ok
 }
 
 func Test_tree_Insert(t *testing.T) {
 	t.Run("fully worked example", func(t *testing.T) {
-		tr := New[int](11)
+		tr := Fixed[int](11)
 		assertEqual(t, 0, tr.Size())
 
 		tr.Put(1)
@@ -143,7 +143,7 @@ func Test_tree_Insert(t *testing.T) {
 
 	t.Run("random tree", func(t *testing.T) {
 		const size = 100
-		tr := New[int](size)
+		tr := Fixed[int](size)
 		for range size {
 			v := rand.Int()
 			tr.Put(v)
@@ -155,27 +155,27 @@ func Test_tree_Insert(t *testing.T) {
 
 func Test_tree_swap(t *testing.T) {
 	t.Run("nil and nil", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		tr.swap(nil, nil)
 		assertEqual(t, 0, tr.Size())
 	})
 
 	t.Run("root with itself", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		tr.root = &node[int]{value: 1}
 		tr.swap(tr.root, tr.root)
 		assertEqual(t, 1, tr.root.value)
 	})
 
 	t.Run("root with nil", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		tr.root = &node[int]{value: 1}
 		tr.swap(tr.root, nil)
 		assertEqual(t, 1, tr.root.value)
 	})
 
 	t.Run("root with left", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		n1 := &node[int]{value: 1}
 		n2 := &node[int]{value: 2}
 		n3 := &node[int]{value: 3}
@@ -196,7 +196,7 @@ func Test_tree_swap(t *testing.T) {
 	})
 
 	t.Run("root with right", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		n1 := &node[int]{value: 1}
 		n2 := &node[int]{value: 2}
 		n3 := &node[int]{value: 3}
@@ -217,7 +217,7 @@ func Test_tree_swap(t *testing.T) {
 	})
 
 	t.Run("root with left left", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		n1 := &node[int]{value: 1}
 		n2 := &node[int]{value: 2}
 		n3 := &node[int]{value: 3}
@@ -244,7 +244,7 @@ func Test_tree_swap(t *testing.T) {
 	})
 
 	t.Run("root with left right", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		n1 := &node[int]{value: 1}
 		n2 := &node[int]{value: 2}
 		n3 := &node[int]{value: 3}
@@ -271,7 +271,7 @@ func Test_tree_swap(t *testing.T) {
 	})
 
 	t.Run("left with grandchild", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		n1 := &node[int]{value: 1}
 		n2 := &node[int]{value: 2}
 		n3 := &node[int]{value: 3}
@@ -298,7 +298,7 @@ func Test_tree_swap(t *testing.T) {
 	})
 
 	t.Run("right with grandchild", func(t *testing.T) {
-		tr := New[int](10)
+		tr := Fixed[int](10)
 		n1 := &node[int]{value: 1}
 		n2 := &node[int]{value: 2}
 		n3 := &node[int]{value: 3}
@@ -467,7 +467,7 @@ func Test_tree_delete(t *testing.T) {
 
 func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 	t.Run("single node", func(t *testing.T) {
-		tr := New[int](1)
+		tr := Fixed[int](1)
 		tr.Put(1)
 		assertEqual(t, 1, tr.Size())
 		assertEqual(t, 1, tr.root.value)
@@ -508,13 +508,13 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 
 func Test_tree_MinMax(t *testing.T) {
 	t.Run("empty tree", func(t *testing.T) {
-		tr := New[int](1)
+		tr := Fixed[int](1)
 		assertEqual(t, 0, tr.Min())
 		assertEqual(t, 0, tr.Max())
 	})
 
 	t.Run("single node", func(t *testing.T) {
-		tr := New[int](1)
+		tr := Fixed[int](1)
 		tr.Put(5)
 		assertEqual(t, 5, tr.Min())
 		assertEqual(t, 5, tr.Max())
@@ -544,7 +544,7 @@ func Test_tree_MinMax(t *testing.T) {
 	t.Run("rolling 50 nodes random", func(t *testing.T) {
 		const size = 50
 		values := make([]int, 0, size)
-		tr := New[int](size)
+		tr := Fixed[int](size)
 		for i := 0; i < 1000; i++ {
 			v := rand.Int()
 			if i >= size {
@@ -567,13 +567,13 @@ func Test_tree_MinMax(t *testing.T) {
 
 func Test_tree_MeanTss(t *testing.T) {
 	t.Run("empty tree", func(t *testing.T) {
-		tr := New[int](1)
+		tr := Fixed[int](1)
 		assertEqual(t, 0.0, tr.Mean())
 		assertEqual(t, 0.0, tr.TotalSumSquares())
 	})
 
 	t.Run("single node", func(t *testing.T) {
-		tr := New[int](1)
+		tr := Fixed[int](1)
 		tr.Put(5)
 		assertEqual(t, 5.0, tr.Mean())
 		assertEqual(t, 0.0, tr.TotalSumSquares())
@@ -607,7 +607,7 @@ func Test_tree_MeanTss(t *testing.T) {
 	t.Run("rolling 50 nodes random", func(t *testing.T) {
 		const size = 50
 		values := make([]int, 0, size)
-		tr := New[int](size)
+		tr := Fixed[int](size)
 		for i := 0; i < 1000; i++ {
 			// Limit the random numbers to avoid overflow when summing
 			v := rand.IntN(65536)

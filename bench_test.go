@@ -8,7 +8,7 @@ import (
 )
 
 func BenchmarkWindow_1000(b *testing.B) {
-	w := mwnd.New[int](1000)
+	w := mwnd.Fixed[int](1000)
 	for range b.N {
 		v := rand.Int()
 		w.Put(v)

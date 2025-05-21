@@ -6,8 +6,8 @@ import (
 	"github.com/davidbacisin/go-mwnd"
 )
 
-func ExampleWindow() {
-	w := mwnd.New[int](5)
+func ExampleFixed() {
+	w := mwnd.Fixed[int](5)
 
 	// Note that len(values) > w.Size(), so the first value (1) will be evicted
 	// when the last value (10) is Put.

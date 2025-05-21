@@ -1,8 +1,8 @@
 package mwnd
 
-// Window aggregates a fixed number of samples. Once the capacity is reached, each new sample causes
+// fixed aggregates a fixed number of samples. Once the capacity is reached, each new sample causes
 // the oldest sample to be evicted from the window.
-type Window[T Numeric] struct {
+type fixed[T Numeric] struct {
 	// nodes is a ring buffer of all nodes, pre-allocated to the max capacity of the tree so that
 	// memory allocations are minimized during normal operation.
 	nodes          []node[T]
@@ -20,16 +20,16 @@ type Window[T Numeric] struct {
 	size int
 }
 
-// New initializes a moving Window with the fixed capacity for samples.
-func New[T Numeric](capacity int) *Window[T] {
-	return &Window[T]{
+// Fixed initializes a moving window with the fixed capacity for samples.
+func Fixed[T Numeric](capacity int) *fixed[T] {
+	return &fixed[T]{
 		nodes: make([]node[T], capacity),
 		i:     0,
 		size:  0,
 	}
 }
 
-func (t *Window[T]) nodeForPut() *node[T] {
+func (t *fixed[T]) nodeForPut() *node[T] {
 	next := &t.nodes[t.i]
 
 	// If the node is already in the tree, remove it.
@@ -46,7 +46,7 @@ func (t *Window[T]) nodeForPut() *node[T] {
 }
 
 // Size returns the current number of samples in the Window.
-func (t *Window[T]) Size() int {
+func (t *fixed[T]) Size() int {
 	return t.size
 }
 
@@ -54,7 +54,7 @@ func (t *Window[T]) Size() int {
 // If the Window has no samples, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (t *Window[T]) Min() T {
+func (t *fixed[T]) Min() T {
 	if t == nil || t.min == nil {
 		var zero T
 		return zero
@@ -67,7 +67,7 @@ func (t *Window[T]) Min() T {
 // If the Window has no samples, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (t *Window[T]) Max() T {
+func (t *fixed[T]) Max() T {
 	if t == nil || t.max == nil {
 		var zero T
 		return zero
@@ -80,7 +80,7 @@ func (t *Window[T]) Max() T {
 // If the Window has no samples, then it returns 0.0.
 //
 // Time complexity O(1).
-func (t *Window[T]) Mean() float64 {
+func (t *fixed[T]) Mean() float64 {
 	return t.mean
 }
 
@@ -90,7 +90,7 @@ func (t *Window[T]) Mean() float64 {
 // by ([Size]() - 1) for unbiased sample variance.
 //
 // Time complexity of O(1).
-func (t *Window[T]) TotalSumSquares() float64 {
+func (t *fixed[T]) TotalSumSquares() float64 {
 	return t.tss
 }
 
@@ -98,7 +98,7 @@ func (t *Window[T]) TotalSumSquares() float64 {
 // evicted to be replaced by the new sample.
 //
 // Time complexity of O(log n), where n is the number of samples in the Window.
-func (t *Window[T]) Put(v T) {
+func (t *fixed[T]) Put(v T) {
 	n := t.nodeForPut()
 	n.value = v
 
@@ -147,7 +147,7 @@ func (t *Window[T]) Put(v T) {
 	t.rebalanceForInsert(n)
 }
 
-func (t *Window[T]) rebalanceForInsert(n *node[T]) {
+func (t *fixed[T]) rebalanceForInsert(n *node[T]) {
 	p := n.parent
 	// Case 1
 	if p == nil {
@@ -191,7 +191,7 @@ func (t *Window[T]) rebalanceForInsert(n *node[T]) {
 	}
 }
 
-func (t *Window[T]) replace(old, n *node[T]) {
+func (t *fixed[T]) replace(old, n *node[T]) {
 	if old.parent == nil {
 		t.root = n
 		if n != nil {
@@ -204,7 +204,7 @@ func (t *Window[T]) replace(old, n *node[T]) {
 	}
 }
 
-func (t *Window[T]) swap(a, b *node[T]) {
+func (t *fixed[T]) swap(a, b *node[T]) {
 	if a == b || a == nil || b == nil {
 		return
 	}
@@ -250,21 +250,21 @@ func (t *Window[T]) swap(a, b *node[T]) {
 	}
 }
 
-func (t *Window[T]) rotateLeft(n *node[T]) {
+func (t *fixed[T]) rotateLeft(n *node[T]) {
 	r := n.right
 	t.replace(n, r)
 	n.setRight(r.left)
 	r.setLeft(n)
 }
 
-func (t *Window[T]) rotateRight(n *node[T]) {
+func (t *fixed[T]) rotateRight(n *node[T]) {
 	l := n.left
 	t.replace(n, l)
 	n.setLeft(l.right)
 	l.setRight(n)
 }
 
-func (t *Window[T]) delete(n *node[T]) {
+func (t *fixed[T]) delete(n *node[T]) {
 	if n == nil {
 		return
 	}
@@ -331,7 +331,7 @@ func (t *Window[T]) delete(n *node[T]) {
 	n.right = nil
 }
 
-func (t *Window[T]) rebalanceForDelete(n *node[T]) {
+func (t *fixed[T]) rebalanceForDelete(n *node[T]) {
 	p := n.parent
 	// Case 1
 	if p == nil {

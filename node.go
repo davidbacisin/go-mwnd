@@ -11,7 +11,7 @@ const (
 	black, red color = false, true
 )
 
-// Numeric describes a number-like type that may be stored as a sample in a [Window].
+// Numeric describes a number-like type that may be stored as a sample in a moving window.
 type Numeric interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
