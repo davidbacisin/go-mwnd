@@ -26,11 +26,11 @@ func main() {
 	}
 	defer out.Close()
 
-	fmt.Fprintln(out, "x y min max mean")
+	fmt.Fprintln(out, "x y min max mean var")
 	for i := 0.0; i < 300*math.Pi; i += 0.1 {
 		v := 5*math.Sin(i*0.01) + math.Sin(i*0.1)
 		w.Put(v)
-		writeLine(out, i, v, w.Min(), w.Max(), w.Mean())
+		writeLine(out, i, v, w.Min(), w.Max(), w.Mean(), w.Variance())
 	}
 
 	cmd := exec.Command("gnuplot", "-e", `
@@ -41,7 +41,8 @@ func main() {
 	plot [0:943] 'data.csv' using "x":"y" with lines title 'samples',
 		'data.csv' using "x":"min" with lines title 'min',
 		'data.csv' using "x":"max" with lines title 'max',
-		'data.csv' using "x":"mean" with lines title 'mean'
+		'data.csv' using "x":"mean" with lines title 'mean',
+		'data.csv' using "x":"var" with lines title 'var'
 	`)
 	if err := cmd.Run(); err != nil {
 		slog.Error("failed to run gnuplot", "error", err)

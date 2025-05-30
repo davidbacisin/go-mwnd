@@ -1,18 +1,18 @@
 package mwnd
 
-// fixed aggregates a fixed number of samples. Once the capacity is reached, each new sample causes
-// the oldest sample to be evicted from the window.
+// fixed aggregates a fixed number of values. Once the capacity is reached, each new value causes
+// the oldest value to be evicted from the window.
 type fixed[T Numeric] struct {
 	// nodes is a ring buffer of all nodes, pre-allocated to the max capacity of the tree so that
 	// memory allocations are minimized during normal operation.
 	nodes          []node[T]
 	root, min, max *node[T]
 
-	// mean is the mean value of all samples in the tree
+	// mean is the mean value of all values in the tree
 	mean float64
 
-	// tss is the total sum of squared differences from the mean
-	tss float64
+	// m2 is the total sum of squared differences from the mean
+	m2 float64
 
 	// i represents the oldest node in the tree, which will be replaced
 	// by the next inserted value
@@ -20,7 +20,10 @@ type fixed[T Numeric] struct {
 	size int
 }
 
-// Fixed initializes a moving window with the fixed capacity for samples.
+// enforce compliance with interface
+var _ Window[float64] = (*fixed[float64])(nil)
+
+// Fixed initializes a moving window with the fixed capacity for values.
 func Fixed[T Numeric](capacity int) *fixed[T] {
 	return &fixed[T]{
 		nodes: make([]node[T], capacity),
@@ -45,13 +48,13 @@ func (t *fixed[T]) nodeForPut() *node[T] {
 	return next
 }
 
-// Size returns the current number of samples in the Window.
+// Size returns the current number of values in the Window.
 func (t *fixed[T]) Size() int {
 	return t.size
 }
 
 // Min returns the lowest value currently in the Window.
-// If the Window has no samples, then it returns the zero value.
+// If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
 func (t *fixed[T]) Min() T {
@@ -64,7 +67,7 @@ func (t *fixed[T]) Min() T {
 }
 
 // Max returns the highest value currently in the Window.
-// If the Window has no samples, then it returns the zero value.
+// If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
 func (t *fixed[T]) Max() T {
@@ -76,28 +79,29 @@ func (t *fixed[T]) Max() T {
 	return t.max.value
 }
 
-// Mean returns the arithmetic mean of all samples currently in the Window.
-// If the Window has no samples, then it returns 0.0.
+// Mean returns the arithmetic mean of all values currently in the Window.
+// If the Window has no values, then it returns 0.0.
 //
 // Time complexity O(1).
 func (t *fixed[T]) Mean() float64 {
 	return t.mean
 }
 
-// TotalSumSquares returns the total sum of squared differences from the mean of
-// all samples currently in the Window. If the Window has no samples, then it returns
-// the zero value. Divide this value by the Window [Size] for biased sample variance or
-// by ([Size]() - 1) for unbiased sample variance.
+// Variance returns the population variance of all values currently in the Window.
+// If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (t *fixed[T]) TotalSumSquares() float64 {
-	return t.tss
+func (t *fixed[T]) Variance() float64 {
+	if t.size == 0 {
+		return 0
+	}
+	return t.m2 / float64(t.size)
 }
 
-// Put adds a new sample to the Window. If the Window is at capacity, then the oldest sample is
-// evicted to be replaced by the new sample.
+// Put adds a new value to the Window. If the Window is at capacity, then the oldest value is
+// evicted to be replaced by the new value.
 //
-// Time complexity of O(log n), where n is the number of samples in the Window.
+// Time complexity of O(log n), where n is the number of values in the Window.
 func (t *fixed[T]) Put(v T) {
 	n := t.nodeForPut()
 	n.value = v
@@ -106,7 +110,7 @@ func (t *fixed[T]) Put(v T) {
 	delta := float64(v) - t.mean
 	t.mean += delta / float64(t.size)
 	delta2 := float64(v) - t.mean
-	t.tss += delta * delta2
+	t.m2 += delta * delta2
 
 	if t.root == nil {
 		t.root = n
@@ -271,15 +275,15 @@ func (t *fixed[T]) delete(n *node[T]) {
 
 	t.size--
 
-	// Adjust the mean and tss for the removed value
+	// Adjust the mean and m2 for the removed value
 	if t.size == 0 {
 		t.mean = 0
-		t.tss = 0
+		t.m2 = 0
 	} else {
 		delta2 := float64(n.value) - t.mean
 		t.mean -= delta2 / float64(t.size)
 		delta := float64(n.value) - t.mean
-		t.tss -= delta * delta2
+		t.m2 -= delta * delta2
 	}
 
 	if n.left != nil && n.right != nil {

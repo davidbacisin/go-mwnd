@@ -20,12 +20,12 @@ func ExampleFixed() {
 	fmt.Printf("Min: %d\n", w.Min())
 	fmt.Printf("Max: %d\n", w.Max())
 	fmt.Printf("Mean: %.2f\n", w.Mean())
-	fmt.Printf("Total Sum of Squares: %.2f\n", w.TotalSumSquares())
+	fmt.Printf("Variance: %.2f\n", w.Variance())
 
 	// Output:
 	// Size: 5
 	// Min: 2
 	// Max: 10
 	// Mean: 4.80
-	// Total Sum of Squares: 38.80
+	// Variance: 7.76
 }

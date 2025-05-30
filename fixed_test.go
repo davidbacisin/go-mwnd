@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func makeTree(values ...int) *fixed[int] {
+func makeFixed(values ...int) *fixed[int] {
 	tr := Fixed[int](len(values))
 	for _, v := range values {
 		tr.Put(v)
@@ -327,7 +327,7 @@ func Test_tree_swap(t *testing.T) {
 
 func Test_tree_delete(t *testing.T) {
 	t.Run("remove leaf, no rotate", func(t *testing.T) {
-		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
+		tr := makeFixed(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root.left.left
 		assertEqual(t, 1, p.value)
@@ -344,7 +344,7 @@ func Test_tree_delete(t *testing.T) {
 	})
 
 	t.Run("replace parent with child; case 4", func(t *testing.T) {
-		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
+		tr := makeFixed(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root.right
 		assertEqual(t, 22, p.value)
@@ -361,7 +361,7 @@ func Test_tree_delete(t *testing.T) {
 	})
 
 	t.Run("remove parent with two children; cases 5 right and 6 left", func(t *testing.T) {
-		tr := makeTree(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
+		tr := makeFixed(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
 		p := tr.root
 		assertEqual(t, 15, p.value)
@@ -380,7 +380,7 @@ func Test_tree_delete(t *testing.T) {
 	})
 
 	t.Run("case 3 rotate left", func(t *testing.T) {
-		tr := makeTree(5, 8, 1, 7, 9, 6)
+		tr := makeFixed(5, 8, 1, 7, 9, 6)
 
 		p := tr.root
 		assertEqual(t, 5, p.value)
@@ -399,7 +399,7 @@ func Test_tree_delete(t *testing.T) {
 	})
 
 	t.Run("case 3 rotate left", func(t *testing.T) {
-		tr := makeTree(5, 8, 1, 7, 9, 6)
+		tr := makeFixed(5, 8, 1, 7, 9, 6)
 
 		p := tr.root
 		assertEqual(t, 5, p.value)
@@ -418,7 +418,7 @@ func Test_tree_delete(t *testing.T) {
 	})
 
 	t.Run("case 3 rotate right", func(t *testing.T) {
-		tr := makeTree(5, 8, 2, 1, 3, 4)
+		tr := makeFixed(5, 8, 2, 1, 3, 4)
 
 		p := tr.root
 		assertEqual(t, 5, p.value)
@@ -437,7 +437,7 @@ func Test_tree_delete(t *testing.T) {
 	})
 
 	t.Run("case 2", func(t *testing.T) {
-		tr := makeTree(5, 2, 8, 6)
+		tr := makeFixed(5, 2, 8, 6)
 
 		p := tr.root
 		assertEqual(t, 5, p.value)
@@ -477,7 +477,7 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 	})
 
 	t.Run("three nodes", func(t *testing.T) {
-		tr := makeTree(1, 2, 3)
+		tr := makeFixed(1, 2, 3)
 		assertEqual(t, 3, tr.Size())
 		assertEqual(t, 2, tr.root.value)
 		assertEqual(t, 1, tr.root.left.value)
@@ -491,7 +491,7 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 	})
 
 	t.Run("three nodes replace root", func(t *testing.T) {
-		tr := makeTree(3, 1, 5)
+		tr := makeFixed(3, 1, 5)
 		assertEqual(t, 3, tr.Size())
 		assertEqual(t, 3, tr.root.value)
 		assertEqual(t, 1, tr.root.left.value)
@@ -524,13 +524,13 @@ func Test_tree_MinMax(t *testing.T) {
 	})
 
 	t.Run("three nodes", func(t *testing.T) {
-		tr := makeTree(2, 1, 3)
+		tr := makeFixed(2, 1, 3)
 		assertEqual(t, 1, tr.Min())
 		assertEqual(t, 3, tr.Max())
 	})
 
 	t.Run("rolling three nodes", func(t *testing.T) {
-		tr := makeTree(1, 2, 3)
+		tr := makeFixed(1, 2, 3)
 		tr.Put(4) // replaces 1
 		assertEqual(t, 2, tr.Min())
 		assertEqual(t, 4, tr.Max())
@@ -565,43 +565,43 @@ func Test_tree_MinMax(t *testing.T) {
 	})
 }
 
-func Test_tree_MeanTss(t *testing.T) {
+func Test_tree_MeanVariance(t *testing.T) {
 	t.Run("empty tree", func(t *testing.T) {
 		tr := Fixed[int](1)
 		assertEqual(t, 0.0, tr.Mean())
-		assertEqual(t, 0.0, tr.TotalSumSquares())
+		assertEqual(t, 0.0, tr.Variance())
 	})
 
 	t.Run("single node", func(t *testing.T) {
 		tr := Fixed[int](1)
 		tr.Put(5)
 		assertEqual(t, 5.0, tr.Mean())
-		assertEqual(t, 0.0, tr.TotalSumSquares())
+		assertEqual(t, 0.0, tr.Variance())
 		tr.Put(6)
 		assertEqual(t, 6.0, tr.Mean())
-		assertEqual(t, 0.0, tr.TotalSumSquares())
+		assertEqual(t, 0.0, tr.Variance())
 	})
 
 	t.Run("three nodes", func(t *testing.T) {
-		tr := makeTree(2, 1, 3)
+		tr := makeFixed(2, 1, 3)
 		assertEqual(t, 2.0, tr.Mean())
-		assertEqual(t, 2.0, tr.TotalSumSquares())
+		assertEqual(t, 2.0/3.0, tr.Variance())
 	})
 
 	t.Run("rolling three nodes", func(t *testing.T) {
-		tr := makeTree(1, 2, 3)
+		tr := makeFixed(1, 2, 3)
 		tr.Put(4) // replaces 1
 		assertEqual(t, 3.0, tr.Mean())
-		assertEqual(t, 2.0, tr.TotalSumSquares())
+		assertEqual(t, 2.0/3.0, tr.Variance())
 		tr.Put(5) // replaces 2
 		assertEqual(t, 4.0, tr.Mean())
-		assertEqual(t, 2.0, tr.TotalSumSquares())
+		assertEqual(t, 2.0/3.0, tr.Variance())
 		tr.Put(0) // replaces 3
 		assertEqual(t, 3.0, tr.Mean())
-		assertEqual(t, 14.0, tr.TotalSumSquares())
+		assertEqual(t, 14.0/3.0, tr.Variance())
 		tr.Put(10) // replaces 4
 		assertEqual(t, 5.0, tr.Mean())
-		assertEqual(t, 50.0, tr.TotalSumSquares())
+		assertEqual(t, 50.0/3.0, tr.Variance())
 	})
 
 	t.Run("rolling 50 nodes random", func(t *testing.T) {
@@ -626,15 +626,17 @@ func Test_tree_MeanTss(t *testing.T) {
 
 			expectedMean := sum / float64(len(values))
 
-			var expectedTss float64
+			var tss float64
 			for _, v := range values {
 				delta := float64(v) - expectedMean
-				expectedTss += delta * delta
+				tss += delta * delta
 			}
 
-			// expectedTss can be rather large, so the allowed error delta is adjusted accordingly
+			expectedVar := tss / float64(tr.size)
+
+			// expectedVar can be rather large, so the allowed error delta is adjusted accordingly
 			if !assertInDelta(t, expectedMean, tr.Mean(), 1e-6, "mean should be within error delta") ||
-				!assertInDelta(t, expectedTss, tr.TotalSumSquares(), expectedTss*1e-12, "tss should be within error delta") {
+				!assertInDelta(t, expectedVar, tr.Variance(), expectedVar*1e-12, "variance should be within error delta") {
 				break
 			}
 		}

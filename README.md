@@ -1,11 +1,11 @@
 # go-mwnd
 Moving window statistics for Go. Computes mean, minimum, maximum, and total sum of squared 
-differences from the mean over a sliding window of a fixed number of samples. When the window 
-is full, the oldest sample is removed when a new sample is added.
+differences from the mean over a sliding window of a fixed number of values. When the window 
+is full, the oldest value is removed when a new value is added.
 
 ## Usage
 ```go
-// Define a moving window that holds up to 5 samples
+// Define a moving window that holds up to 5 values
 w := mwnd.Fixed[int](5)
 
 // Note that len(values) > w.Size(), so when the last value (10) is Put,
@@ -23,13 +23,14 @@ fmt.Printf("Total Sum of Squares: %.2f\n", w.TotalSumSquares())
 ```
 
 ## Example visualization
-The following plot shows generated sample data (solid purple line) and the moving min, max, and mean 
-for a fixed window of 500 samples:
+The following plot shows generated data (solid purple line) and the moving min, max, and mean 
+for a fixed window of 500 values:
 ![plot of a composite sine wave and its moving window statistics](internal/examples/fixed/plot.png)
 
 ## Limitations and Future Work
 - The moving window implementation is not safe for concurrent reads or writes. Consider using 
 [`sync.Mutex`](https://pkg.go.dev/sync#Mutex) or [`sync.RWMutex`](https://pkg.go.dev/sync#RWMutex) 
 to synchronize access under a concurrent workload.
-- **Random sampling**: In some cases, it may be impractical to include every sample 
-in the window. Instead, a random subset could be probabilistically sampled.
+- **Random sampling**: In some cases, it may be impractical to include every value 
+in the window. Instead, a random subset could be probabilistically sampled. The variance 
+calculation would need to be corrected for bias.
