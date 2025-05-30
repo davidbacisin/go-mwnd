@@ -67,7 +67,7 @@ func assertRedBlackProperties[T Numeric](t *testing.T, tr *fixed[T]) bool {
 	return ok
 }
 
-func Test_tree_Insert(t *testing.T) {
+func Test_fixed_Insert(t *testing.T) {
 	t.Run("fully worked example", func(t *testing.T) {
 		tr := Fixed[int](11)
 		assertEqual(t, 0, tr.Size())
@@ -141,7 +141,7 @@ func Test_tree_Insert(t *testing.T) {
 		assertEqual(t, 11, tr.Size(), "should reach its capacity")
 	})
 
-	t.Run("random tree", func(t *testing.T) {
+	t.Run("random", func(t *testing.T) {
 		const size = 100
 		tr := Fixed[int](size)
 		for range size {
@@ -153,7 +153,7 @@ func Test_tree_Insert(t *testing.T) {
 	})
 }
 
-func Test_tree_swap(t *testing.T) {
+func Test_fixed_swap(t *testing.T) {
 	t.Run("nil and nil", func(t *testing.T) {
 		tr := Fixed[int](10)
 		tr.swap(nil, nil)
@@ -325,7 +325,7 @@ func Test_tree_swap(t *testing.T) {
 	})
 }
 
-func Test_tree_delete(t *testing.T) {
+func Test_fixed_delete(t *testing.T) {
 	t.Run("remove leaf, no rotate", func(t *testing.T) {
 		tr := makeFixed(1, 22, 27, 15, 6, 11, 17, 25, 13, 8, 1)
 
@@ -465,7 +465,7 @@ func Test_tree_delete(t *testing.T) {
 	})
 }
 
-func Test_tree_rollingWindowAtCapacity(t *testing.T) {
+func Test_fixed_rollingWindowAtCapacity(t *testing.T) {
 	t.Run("single node", func(t *testing.T) {
 		tr := Fixed[int](1)
 		tr.Put(1)
@@ -506,8 +506,8 @@ func Test_tree_rollingWindowAtCapacity(t *testing.T) {
 	})
 }
 
-func Test_tree_MinMax(t *testing.T) {
-	t.Run("empty tree", func(t *testing.T) {
+func Test_fixed_MinMax(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
 		tr := Fixed[int](1)
 		assertEqual(t, 0, tr.Min())
 		assertEqual(t, 0, tr.Max())
@@ -565,8 +565,8 @@ func Test_tree_MinMax(t *testing.T) {
 	})
 }
 
-func Test_tree_MeanVariance(t *testing.T) {
-	t.Run("empty tree", func(t *testing.T) {
+func Test_fixed_MeanVariance(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
 		tr := Fixed[int](1)
 		assertEqual(t, 0.0, tr.Mean())
 		assertEqual(t, 0.0, tr.Variance())

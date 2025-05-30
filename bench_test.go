@@ -7,8 +7,21 @@ import (
 	"github.com/davidbacisin/go-mwnd"
 )
 
-func BenchmarkWindow_1000(b *testing.B) {
+func BenchmarkFixed_1000(b *testing.B) {
 	w := mwnd.Fixed[int](1000)
+	for range b.N {
+		v := rand.Int()
+		w.Put(v)
+
+		if w.Min() < 0 || w.Max() < 0 || w.Mean() < 0.0 {
+			b.Logf("invalid min, max, or mean")
+			b.FailNow()
+		}
+	}
+}
+
+func BenchmarkExponential(b *testing.B) {
+	w := mwnd.Exponential[int](0.002)
 	for range b.N {
 		v := rand.Int()
 		w.Put(v)

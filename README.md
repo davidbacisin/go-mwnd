@@ -1,11 +1,11 @@
 # go-mwnd
-Moving window statistics for Go. Computes mean, minimum, maximum, and total sum of squared 
-differences from the mean over a sliding window of a fixed number of values. When the window 
-is full, the oldest value is removed when a new value is added.
+Moving window statistics for Go. Computes mean, minimum, maximum, and population 
+variance over a sliding window, supporting both fixed-size and 
+exponentially-weighted windows.
 
-## Usage
+## Usage 🚀
 ```go
-// Define a moving window that holds up to 5 values
+// Define a fixed moving window that holds up to 5 values
 w := mwnd.Fixed[int](5)
 
 // Note that len(values) > w.Size(), so when the last value (10) is Put,
@@ -19,16 +19,23 @@ fmt.Printf("Size: %d\n", w.Size())
 fmt.Printf("Min: %d\n", w.Min())
 fmt.Printf("Max: %d\n", w.Max())
 fmt.Printf("Mean: %.2f\n", w.Mean())
-fmt.Printf("Total Sum of Squares: %.2f\n", w.TotalSumSquares())
+fmt.Printf("Variance: %.2f\n", w.Variance())
 ```
 
-## Example visualization
-The following plot shows generated data (solid purple line) and the moving min, max, and mean 
+## Example visualization 📊
+The following plot shows generated data (solid purple line) and the moving min, max, mean, and variance 
 for a fixed window of 500 values:
-![plot of a composite sine wave and its moving window statistics](internal/examples/fixed/plot.png)
+![plot of a composite sine wave and its fixed moving window statistics](internal/examples/fixed/plot.png)
 
-## Limitations and Future Work
-- The moving window implementation is not safe for concurrent reads or writes. Consider using 
+The following plot shows the same data with statistics from an exponentially-weighted moving window 
+with alpha = 0.004:
+![plot of a composite sine wave and its exponential moving window statistics](internal/examples/exponential/plot.png)
+
+Note especially the differences in min, max, and variance between these two implementations: as a result,
+they are not interchangeable and instead can only approximate each other.
+
+## Limitations and Future Work 🧪
+- The moving window implementations are not safe for concurrent reads or writes. Consider using 
 [`sync.Mutex`](https://pkg.go.dev/sync#Mutex) or [`sync.RWMutex`](https://pkg.go.dev/sync#RWMutex) 
 to synchronize access under a concurrent workload.
 - **Random sampling**: In some cases, it may be impractical to include every value 
