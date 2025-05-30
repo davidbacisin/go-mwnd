@@ -1,4 +1,6 @@
 # go-mwnd
+[![codecov](https://codecov.io/gh/davidbacisin/go-mwnd/graph/badge.svg?token=439YYC0C5O)](https://codecov.io/gh/davidbacisin/go-mwnd)
+
 Moving window statistics for Go. Computes mean, minimum, maximum, and population 
 variance over a sliding window, supporting both fixed-size and 
 exponentially-weighted windows.
