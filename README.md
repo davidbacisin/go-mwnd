@@ -1,5 +1,5 @@
 # go-mwnd
-[![codecov](https://codecov.io/gh/davidbacisin/go-mwnd/graph/badge.svg?token=439YYC0C5O)](https://codecov.io/gh/davidbacisin/go-mwnd)
+[![codecov](https://codecov.io/gh/davidbacisin/go-mwnd/graph/badge.svg?token=439YYC0C5O)](https://codecov.io/gh/davidbacisin/go-mwnd) [![buy me a coffee](https://img.shields.io/badge/%E2%80%8B_buy_me_a_coffee-fd0?logo=buymeacoffee&logoColor=333)](https://buymeacoffee.com/davidbacisin)
 
 Moving window statistics for Go. Computes mean, minimum, maximum, and population 
 variance over a sliding window, supporting both fixed-size and 
