@@ -22,4 +22,4 @@ go.work.sum
 .env
 
 # Example data
-data.csv
+*.csv

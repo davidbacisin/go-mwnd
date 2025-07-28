@@ -103,6 +103,8 @@ func (t *fixed[T]) Variance() float64 {
 // Quantile returns the value for which the probability of another value being
 // less than or equal to that value is q. For example, q = 0.5 returns the median,
 // meaning that half of all values are less than or equal to that median.
+//
+// Worst case time complexity of O(log n), where n is the number of values in the Window.
 func (t *fixed[T]) Quantile(q float64) T {
 	if q < 0.0 || q > 1.0 {
 		panic("q must be between 0.0 and 1.0, inclusive")
