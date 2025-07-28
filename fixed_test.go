@@ -24,18 +24,16 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (total in
 		blackCount++
 	}
 
-	var leftBlackCount, rightBlackCount int
+	var (
+		leftTotal, leftBlack, rightTotal, rightBlack int
+		leftOk, rightOk                              bool
+	)
 
 	if n.left != nil {
 		ok = ok && assertLess(t, n.left.value, n.value, "left child should have a lesser value than parent")
 
-		leftTotal, leftBlack, leftOk := assertRedBlackPropertiesNode(t, n.left)
+		leftTotal, leftBlack, leftOk = assertRedBlackPropertiesNode(t, n.left)
 		total += leftTotal
-		leftBlackCount = leftBlack
-
-		if !assertEqual(t, leftTotal, n.nLeft, "incorrect node left subtree count") {
-			return total, blackCount, false
-		}
 
 		if !leftOk {
 			return total, blackCount, false
@@ -47,17 +45,21 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (total in
 			ok = ok && assertLess(t, n.value, n.right.value, "right child should have a greater or equal value to parent")
 		}
 
-		rightTotal, rightBlack, rightOk := assertRedBlackPropertiesNode(t, n.right)
+		rightTotal, rightBlack, rightOk = assertRedBlackPropertiesNode(t, n.right)
 		total += rightTotal
-		rightBlackCount = rightBlack
-
-		if !assertEqual(t, rightTotal, n.nRight, "incorrect node right subtree count") {
-			return total, blackCount, false
-		}
 
 		if !rightOk {
 			return total, blackCount, false
 		}
+	}
+
+	// Subtree sizes
+	if !assertEqual(t, leftTotal, n.nLeft, "incorrect node left subtree count") {
+		return total, blackCount, false
+	}
+
+	if !assertEqual(t, rightTotal, n.nRight, "incorrect node right subtree count") {
+		return total, blackCount, false
 	}
 
 	// Red-black properties
@@ -66,8 +68,8 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (total in
 		ok = ok && assertEqual(t, black, n.right.safeColor(), "red node should have black right child")
 	}
 
-	assertEqual(t, leftBlackCount, rightBlackCount, "should have equal number of black nodes to each leaf")
-	return total, leftBlackCount, ok
+	assertEqual(t, leftBlack, rightBlack, "should have equal number of black nodes to each leaf")
+	return total, leftBlack, ok
 }
 
 func assertRedBlackProperties[T Numeric](t *testing.T, tr *fixed[T]) bool {
@@ -493,6 +495,39 @@ func Test_fixed_rollingWindowAtCapacity(t *testing.T) {
 		assertEqual(t, 1, tr.root.left.value)
 		assertEqual(t, 5, tr.root.right.value)
 	})
+
+	t.Run("resets subtree counts for replaced node", func(t *testing.T) {
+		// Can you tell that this was a particularly subtle bug?
+		// The node that will be replaced (50784) did not correctly have its subtree counts
+		// reset to zero before that node was reused for the new value (37314). This threw
+		// off subtree counts up to the root, which in turn breaks quantile calculation.
+		tr := makeFixed(36564, 50784, 30136, 31835, 44643, 2647, 63181, 13969, 43113, 33834)
+		tr.i = 1
+		tr.Put(37314)
+		assertRedBlackProperties(t, tr)
+	})
+
+	t.Run("rolling 50 nodes random", func(t *testing.T) {
+		const size = 50
+		values := make([]int, 0, size)
+		tr := Fixed[int](size)
+		for i := range 1000 {
+			v := rand.IntN(65536)
+			if i >= size {
+				k := i % size
+				values[k] = v
+			} else {
+				values = append(values, v)
+			}
+
+			tr.Put(v)
+
+			if !assertRedBlackProperties(t, tr) {
+				t.Logf("failed at i=%d", i)
+				break
+			}
+		}
+	})
 }
 
 func Test_fixed_MinMax(t *testing.T) {
@@ -655,7 +690,7 @@ func Test_fixed_Quantile(t *testing.T) {
 	t.Run("two nodes", func(t *testing.T) {
 		tr := makeFixed(2, 1)
 		assertEqual(t, 1, tr.Quantile(0.1))
-		assertEqual(t, 2, tr.Quantile(0.5))
+		assertEqual(t, 1, tr.Quantile(0.5))
 		assertEqual(t, 2, tr.Quantile(0.9))
 	})
 
@@ -694,17 +729,21 @@ func Test_fixed_Quantile(t *testing.T) {
 
 			tr.Put(v)
 
-			wantFirstDecile := slowQuantile(values, 0.1)
+			// Make a copy of values so that slowQuantile's sort doesn't break the order
+			// in which we replace old values.
+			valuesCopy := slices.Clone(values)
+
+			wantFirstDecile := slowQuantile(valuesCopy, 0.1)
 			gotFirstDecile := tr.Quantile(0.1)
-			ok := assertEqual(t, wantFirstDecile, gotFirstDecile)
+			ok := assertEqual(t, wantFirstDecile, gotFirstDecile, "unexpected first decile")
 
-			wantMedian := slowQuantile(values, 0.5)
+			wantMedian := slowQuantile(valuesCopy, 0.5)
 			gotMedian := tr.Quantile(0.5)
-			ok = ok && assertEqual(t, wantMedian, gotMedian)
+			ok = ok && assertEqual(t, wantMedian, gotMedian, "unexpected median")
 
-			wantNinthDecile := slowQuantile(values, 0.9)
+			wantNinthDecile := slowQuantile(valuesCopy, 0.9)
 			gotNinthDecile := tr.Quantile(0.9)
-			ok = ok && assertEqual(t, wantNinthDecile, gotNinthDecile)
+			ok = ok && assertEqual(t, wantNinthDecile, gotNinthDecile, "unexpected ninth decile")
 
 			if !ok {
 				t.Logf("failed at i=%d", i)
@@ -725,7 +764,7 @@ func slowQuantile(values []int, q float64) int {
 	slices.Sort(values)
 	fLen := float64(len(values))
 	for i := 0; i < len(values); i++ {
-		if float64(i+1)/fLen > q {
+		if float64(i+1)/fLen >= q {
 			return values[i]
 		}
 	}
@@ -737,7 +776,14 @@ func Test_slowQuantile(t *testing.T) {
 	v := []int{3, 6, 7, 8, 8, 10, 13, 15, 16, 20}
 	assertEqual(t, 3, slowQuantile(v, 0.0))
 	assertEqual(t, 7, slowQuantile(v, 0.25))
-	assertEqual(t, 10, slowQuantile(v, 0.5))
+	assertEqual(t, 8, slowQuantile(v, 0.5))
 	assertEqual(t, 15, slowQuantile(v, 0.75))
 	assertEqual(t, 20, slowQuantile(v, 1.0))
+
+	v = append(v, 21)
+	assertEqual(t, 3, slowQuantile(v, 0.0))
+	assertEqual(t, 7, slowQuantile(v, 0.25))
+	assertEqual(t, 10, slowQuantile(v, 0.5))
+	assertEqual(t, 16, slowQuantile(v, 0.75))
+	assertEqual(t, 21, slowQuantile(v, 1.0))
 }

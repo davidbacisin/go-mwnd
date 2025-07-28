@@ -22,7 +22,9 @@ type node[T Numeric] struct {
 	value               T
 	parent, left, right *node[T]
 	color               color
-	nLeft, nRight       int
+
+	// nLeft and nRight are the number of child nodes in each direction
+	nLeft, nRight int
 }
 
 func (n *node[T]) setLeft(l *node[T]) {

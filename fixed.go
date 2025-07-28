@@ -101,8 +101,8 @@ func (t *fixed[T]) Variance() float64 {
 }
 
 // Quantile returns the value for which the probability of another value being
-// less than that value is q. For example, q = 0.5 returns the median, meaning
-// that half of all values are less than that median.
+// less than or equal to that value is q. For example, q = 0.5 returns the median,
+// meaning that half of all values are less than or equal to that median.
 func (t *fixed[T]) Quantile(q float64) T {
 	if q < 0.0 || q > 1.0 {
 		panic("q must be between 0.0 and 1.0, inclusive")
@@ -112,27 +112,30 @@ func (t *fixed[T]) Quantile(q float64) T {
 		return 0
 	}
 
-	// If the size is even, add one to ensure we choose the bigger value, which
-	// therefore satisfies the "less than" portion of the definition for quantile
-	adj := (t.size + 1) % 2
-	i := int(math.Ceil(float64(t.size+adj) * q))
-
 	n := t.root
+
+	// i and order are 1-indexed
+	i := int(math.Ceil(float64(t.size) * q))
+	order := 1 + n.nLeft
 	for {
-		if i == n.nLeft+1 {
+		if i == order {
 			break
 		}
 
-		if i > n.nLeft+1 {
+		if i > order {
 			if n.right == nil {
 				break
 			}
 			n = n.right
+			// New node is ordered one ahead of its left subtree
+			order += n.nLeft + 1
 		} else {
 			if n.left == nil {
 				break
 			}
 			n = n.left
+			// New node is ordered behind its parent and right subtree
+			order -= n.nRight + 1
 		}
 	}
 
@@ -403,7 +406,9 @@ func (t *fixed[T]) delete(n *node[T]) {
 	// Remove the node completely from the tree
 	n.parent = nil
 	n.left = nil
+	n.nLeft = 0
 	n.right = nil
+	n.nRight = 0
 }
 
 func (t *fixed[T]) rebalanceForDelete(n *node[T]) {
