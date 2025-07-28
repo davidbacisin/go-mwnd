@@ -22,6 +22,9 @@ type node[T Numeric] struct {
 	value               T
 	parent, left, right *node[T]
 	color               color
+
+	// nLeft and nRight are the number of child nodes in each direction
+	nLeft, nRight int
 }
 
 func (n *node[T]) setLeft(l *node[T]) {
@@ -78,6 +81,13 @@ func (n *node[T]) grandparentAndUncle() (*node[T], *node[T]) {
 		return nil, nil
 	}
 	return g, n.parent.sibling()
+}
+
+func (n *node[T]) subtreeSize() int {
+	if n == nil {
+		return 0
+	}
+	return n.nLeft + n.nRight + 1
 }
 
 func (n *node[T]) String() string {

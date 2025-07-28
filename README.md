@@ -1,9 +1,9 @@
 # go-mwnd
 [![codecov](https://codecov.io/gh/davidbacisin/go-mwnd/graph/badge.svg?token=439YYC0C5O)](https://codecov.io/gh/davidbacisin/go-mwnd) [![buy me a coffee](https://img.shields.io/badge/%E2%80%8B_buy_me_a_coffee-fd0?logo=buymeacoffee&logoColor=333)](https://buymeacoffee.com/davidbacisin)
 
-Moving window statistics for Go. Computes mean, minimum, maximum, and population 
+Moving window order statistics for Go. Computes mean, minimum, maximum, and population 
 variance over a sliding window, supporting both fixed-size and 
-exponentially-weighted windows.
+exponentially-weighted windows. The fixed-size window also supports computing any quantile.
 
 ## Usage 🚀
 ```go
@@ -22,12 +22,16 @@ fmt.Printf("Min: %d\n", w.Min())
 fmt.Printf("Max: %d\n", w.Max())
 fmt.Printf("Mean: %.2f\n", w.Mean())
 fmt.Printf("Variance: %.2f\n", w.Variance())
+fmt.Printf("Median: %d\n", w.Quantile(0.5))
 ```
 
 ## Example visualization 📊
 The following plot shows generated data (solid purple line) and the moving min, max, mean, and variance 
 for a fixed window of 500 values:
 ![plot of a composite sine wave and its fixed moving window statistics](internal/examples/fixed/plot.png)
+
+Plotted below are the first and ninth deciles, all quartiles, and 99th percentile of the same data set and fixed window parameters:
+![plot of a composite sine wave and its fixed moving window quantiles](internal/examples/fixed/quantiles.png)
 
 The following plot shows the same data with statistics from an exponentially-weighted moving window 
 with alpha = 0.004:

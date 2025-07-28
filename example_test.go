@@ -21,6 +21,7 @@ func ExampleFixed() {
 	fmt.Printf("Max: %d\n", w.Max())
 	fmt.Printf("Mean: %.2f\n", w.Mean())
 	fmt.Printf("Variance: %.2f\n", w.Variance())
+	fmt.Printf("Median: %d\n", w.Quantile(0.5))
 
 	// Output:
 	// Size: 5
@@ -28,6 +29,7 @@ func ExampleFixed() {
 	// Max: 10
 	// Mean: 4.80
 	// Variance: 7.76
+	// Median: 4
 }
 
 func ExampleExponential() {

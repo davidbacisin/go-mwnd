@@ -1,5 +1,7 @@
 package mwnd
 
+import "math"
+
 // fixed aggregates a fixed number of values. Once the capacity is reached, each new value causes
 // the oldest value to be evicted from the window.
 type fixed[T Numeric] struct {
@@ -98,6 +100,50 @@ func (t *fixed[T]) Variance() float64 {
 	return t.m2 / float64(t.size)
 }
 
+// Quantile returns the value for which the probability of another value being
+// less than or equal to that value is q. For example, q = 0.5 returns the median,
+// meaning that half of all values are less than or equal to that median.
+//
+// Worst case time complexity of O(log n), where n is the number of values in the Window.
+func (t *fixed[T]) Quantile(q float64) T {
+	if q < 0.0 || q > 1.0 {
+		panic("q must be between 0.0 and 1.0, inclusive")
+	}
+
+	if t.size == 0 {
+		return 0
+	}
+
+	n := t.root
+
+	// i and order are 1-indexed
+	i := int(math.Ceil(float64(t.size) * q))
+	order := 1 + n.nLeft
+	for {
+		if i == order {
+			break
+		}
+
+		if i > order {
+			if n.right == nil {
+				break
+			}
+			n = n.right
+			// New node is ordered one ahead of its left subtree
+			order += n.nLeft + 1
+		} else {
+			if n.left == nil {
+				break
+			}
+			n = n.left
+			// New node is ordered behind its parent and right subtree
+			order -= n.nRight + 1
+		}
+	}
+
+	return n.value
+}
+
 // Put adds a new value to the Window. If the Window is at capacity, then the oldest value is
 // evicted to be replaced by the new value.
 //
@@ -124,6 +170,7 @@ func (t *fixed[T]) Put(v T) {
 	p := t.root
 	for {
 		if v < p.value {
+			p.nLeft++
 			if p.left == nil {
 				p.setLeft(n)
 
@@ -135,6 +182,7 @@ func (t *fixed[T]) Put(v T) {
 
 			p = p.left
 		} else {
+			p.nRight++
 			if p.right == nil {
 				p.setRight(n)
 
@@ -236,12 +284,17 @@ func (t *fixed[T]) swap(a, b *node[T]) {
 	b.setLeft(aLeft)
 	b.setRight(aRight)
 
+	a.nLeft, b.nLeft = b.nLeft, a.nLeft
+	a.nRight, b.nRight = b.nRight, a.nRight
+
 	if aParent == b {
 		t.replace(b, a)
 		if aWasLeft {
 			a.setLeft(b)
+			a.nLeft = b.subtreeSize()
 		} else {
 			a.setRight(b)
+			a.nRight = b.subtreeSize()
 		}
 		return
 	}
@@ -249,23 +302,31 @@ func (t *fixed[T]) swap(a, b *node[T]) {
 	t.replace(a, b)
 	if bWasLeft {
 		bParent.setLeft(a)
+		bParent.nLeft = a.subtreeSize()
 	} else {
 		bParent.setRight(a)
+		bParent.nRight = a.subtreeSize()
 	}
 }
 
 func (t *fixed[T]) rotateLeft(n *node[T]) {
 	r := n.right
 	t.replace(n, r)
+	// Update the deepest node first so that subtree counts are right
 	n.setRight(r.left)
+	n.nRight = r.left.subtreeSize()
 	r.setLeft(n)
+	r.nLeft = n.subtreeSize()
 }
 
 func (t *fixed[T]) rotateRight(n *node[T]) {
 	l := n.left
 	t.replace(n, l)
+	// Update the deepest node first so that subtree counts are right
 	n.setLeft(l.right)
+	n.nLeft = l.right.subtreeSize()
 	l.setRight(n)
+	l.nRight = n.subtreeSize()
 }
 
 func (t *fixed[T]) delete(n *node[T]) {
@@ -300,6 +361,8 @@ func (t *fixed[T]) delete(n *node[T]) {
 		// children, it couldn't possibly be either min or max.
 	}
 
+	wasLeft := n.parent != nil && n.parent.left == n
+
 	// Invariant: n.left, n.right, or both are nil
 	child := n.left
 	if child == nil {
@@ -327,12 +390,27 @@ func (t *fixed[T]) delete(n *node[T]) {
 		t.rebalanceForDelete(n)
 	}
 
+	p := n.parent
 	t.replace(n, child)
+
+	// Bubble up changes in subtree size
+	for p != nil {
+		if wasLeft {
+			p.nLeft = child.subtreeSize()
+		} else {
+			p.nRight = child.subtreeSize()
+		}
+
+		child, p = p, p.parent
+		wasLeft = p != nil && p.left == child
+	}
 
 	// Remove the node completely from the tree
 	n.parent = nil
 	n.left = nil
+	n.nLeft = 0
 	n.right = nil
+	n.nRight = 0
 }
 
 func (t *fixed[T]) rebalanceForDelete(n *node[T]) {
