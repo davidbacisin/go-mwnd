@@ -1,8 +1,15 @@
 package mwnd
 
-// exponential computes exponentially weighted moving window statistics
+// ExponentialWindow computes exponentially weighted moving window statistics
 // over the input stream.
-type exponential[T Numeric] struct {
+//
+// All operations on the ExponentialWindow take constant time. Compared to FixedWindow,
+// the exponential window has the advantages of constant time Puts
+// and less memory usage, since it does not store any input values.
+// However, exponential windows provide fundamentally different calculations from fixed
+// windows—notably, infinite impulse response instead of finite impulse response—so
+// the implementations are not generally interchangeable.
+type ExponentialWindow[T Numeric] struct {
 	// alpha is the weight of exponential fall-off
 	alpha    float64
 	mean, m2 float64
@@ -11,11 +18,11 @@ type exponential[T Numeric] struct {
 }
 
 // enforce compliance with interface
-var _ Window[float64] = (*exponential[float64])(nil)
+var _ window[float64] = (*ExponentialWindow[float64])(nil)
 
 // Exponential initializes a moving window with the provided weight alpha.
-func Exponential[T Numeric](alpha float64) *exponential[T] {
-	return &exponential[T]{
+func Exponential[T Numeric](alpha float64) *ExponentialWindow[T] {
+	return &ExponentialWindow[T]{
 		alpha: alpha,
 		size:  0,
 	}
@@ -28,7 +35,7 @@ func ExponentialAlphaForApproximatingFixed(n int) float64 {
 }
 
 // Size returns the number of values added to the Window.
-func (w *exponential[T]) Size() int {
+func (w *ExponentialWindow[T]) Size() int {
 	return w.size
 }
 
@@ -36,7 +43,7 @@ func (w *exponential[T]) Size() int {
 // If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (w *exponential[T]) Min() T {
+func (w *ExponentialWindow[T]) Min() T {
 	return w.min
 }
 
@@ -44,7 +51,7 @@ func (w *exponential[T]) Min() T {
 // If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (w *exponential[T]) Max() T {
+func (w *ExponentialWindow[T]) Max() T {
 	return w.max
 }
 
@@ -53,7 +60,7 @@ func (w *exponential[T]) Max() T {
 // then it returns the zero value.
 //
 // Time complexity of O(1).
-func (w *exponential[T]) Mean() float64 {
+func (w *ExponentialWindow[T]) Mean() float64 {
 	return w.mean
 }
 
@@ -62,7 +69,7 @@ func (w *exponential[T]) Mean() float64 {
 // then it returns the zero value.
 //
 // Time complexity of O(1).
-func (w *exponential[T]) Variance() float64 {
+func (w *ExponentialWindow[T]) Variance() float64 {
 	if w.size == 0 {
 		return 0
 	}
@@ -72,7 +79,7 @@ func (w *exponential[T]) Variance() float64 {
 // Put adds a new value to the Window.
 //
 // Time complexity of O(1).
-func (w *exponential[T]) Put(v T) {
+func (w *ExponentialWindow[T]) Put(v T) {
 	w.size++
 	if w.size == 1 {
 		w.mean = float64(v)

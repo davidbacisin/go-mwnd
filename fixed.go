@@ -2,9 +2,14 @@ package mwnd
 
 import "math"
 
-// fixed aggregates a fixed number of values. Once the capacity is reached, each new value causes
+// FixedWindow aggregates a FixedWindow number of values. Once the capacity is reached, each new value causes
 // the oldest value to be evicted from the window.
-type fixed[T Numeric] struct {
+//
+// The worst-case time complexity of adding a new value to the window is O(log n), where n is the capacity
+// of the window. This is achieved by maintaining a red-black balanced binary tree as the underlying data
+// structure. Furthermore, Put and all statistical operations avoid memory allocations
+// to preserve performance in high-scale environments.
+type FixedWindow[T Numeric] struct {
 	// nodes is a ring buffer of all nodes, pre-allocated to the max capacity of the tree so that
 	// memory allocations are minimized during normal operation.
 	nodes          []node[T]
@@ -23,18 +28,18 @@ type fixed[T Numeric] struct {
 }
 
 // enforce compliance with interface
-var _ Window[float64] = (*fixed[float64])(nil)
+var _ window[float64] = (*FixedWindow[float64])(nil)
 
 // Fixed initializes a moving window with the fixed capacity for values.
-func Fixed[T Numeric](capacity int) *fixed[T] {
-	return &fixed[T]{
+func Fixed[T Numeric](capacity int) *FixedWindow[T] {
+	return &FixedWindow[T]{
 		nodes: make([]node[T], capacity),
 		i:     0,
 		size:  0,
 	}
 }
 
-func (t *fixed[T]) nodeForPut() *node[T] {
+func (t *FixedWindow[T]) nodeForPut() *node[T] {
 	next := &t.nodes[t.i]
 
 	// If the node is already in the tree, remove it.
@@ -51,7 +56,7 @@ func (t *fixed[T]) nodeForPut() *node[T] {
 }
 
 // Size returns the current number of values in the Window.
-func (t *fixed[T]) Size() int {
+func (t *FixedWindow[T]) Size() int {
 	return t.size
 }
 
@@ -59,7 +64,7 @@ func (t *fixed[T]) Size() int {
 // If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (t *fixed[T]) Min() T {
+func (t *FixedWindow[T]) Min() T {
 	if t == nil || t.min == nil {
 		var zero T
 		return zero
@@ -72,7 +77,7 @@ func (t *fixed[T]) Min() T {
 // If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (t *fixed[T]) Max() T {
+func (t *FixedWindow[T]) Max() T {
 	if t == nil || t.max == nil {
 		var zero T
 		return zero
@@ -85,7 +90,7 @@ func (t *fixed[T]) Max() T {
 // If the Window has no values, then it returns 0.0.
 //
 // Time complexity O(1).
-func (t *fixed[T]) Mean() float64 {
+func (t *FixedWindow[T]) Mean() float64 {
 	return t.mean
 }
 
@@ -93,7 +98,7 @@ func (t *fixed[T]) Mean() float64 {
 // If the Window has no values, then it returns the zero value.
 //
 // Time complexity of O(1).
-func (t *fixed[T]) Variance() float64 {
+func (t *FixedWindow[T]) Variance() float64 {
 	if t.size == 0 {
 		return 0
 	}
@@ -105,7 +110,7 @@ func (t *fixed[T]) Variance() float64 {
 // meaning that half of all values are less than or equal to that median.
 //
 // Worst case time complexity of O(log n), where n is the number of values in the Window.
-func (t *fixed[T]) Quantile(q float64) T {
+func (t *FixedWindow[T]) Quantile(q float64) T {
 	if q < 0.0 || q > 1.0 {
 		panic("q must be between 0.0 and 1.0, inclusive")
 	}
@@ -148,7 +153,7 @@ func (t *fixed[T]) Quantile(q float64) T {
 // evicted to be replaced by the new value.
 //
 // Time complexity of O(log n), where n is the number of values in the Window.
-func (t *fixed[T]) Put(v T) {
+func (t *FixedWindow[T]) Put(v T) {
 	n := t.nodeForPut()
 	n.value = v
 
@@ -199,7 +204,7 @@ func (t *fixed[T]) Put(v T) {
 	t.rebalanceForInsert(n)
 }
 
-func (t *fixed[T]) rebalanceForInsert(n *node[T]) {
+func (t *FixedWindow[T]) rebalanceForInsert(n *node[T]) {
 	p := n.parent
 	// Case 1
 	if p == nil {
@@ -243,7 +248,7 @@ func (t *fixed[T]) rebalanceForInsert(n *node[T]) {
 	}
 }
 
-func (t *fixed[T]) replace(old, n *node[T]) {
+func (t *FixedWindow[T]) replace(old, n *node[T]) {
 	if old.parent == nil {
 		t.root = n
 		if n != nil {
@@ -256,7 +261,7 @@ func (t *fixed[T]) replace(old, n *node[T]) {
 	}
 }
 
-func (t *fixed[T]) swap(a, b *node[T]) {
+func (t *FixedWindow[T]) swap(a, b *node[T]) {
 	if a == b || a == nil || b == nil {
 		return
 	}
@@ -309,7 +314,7 @@ func (t *fixed[T]) swap(a, b *node[T]) {
 	}
 }
 
-func (t *fixed[T]) rotateLeft(n *node[T]) {
+func (t *FixedWindow[T]) rotateLeft(n *node[T]) {
 	r := n.right
 	t.replace(n, r)
 	// Update the deepest node first so that subtree counts are right
@@ -319,7 +324,7 @@ func (t *fixed[T]) rotateLeft(n *node[T]) {
 	r.nLeft = n.subtreeSize()
 }
 
-func (t *fixed[T]) rotateRight(n *node[T]) {
+func (t *FixedWindow[T]) rotateRight(n *node[T]) {
 	l := n.left
 	t.replace(n, l)
 	// Update the deepest node first so that subtree counts are right
@@ -329,7 +334,7 @@ func (t *fixed[T]) rotateRight(n *node[T]) {
 	l.nRight = n.subtreeSize()
 }
 
-func (t *fixed[T]) delete(n *node[T]) {
+func (t *FixedWindow[T]) delete(n *node[T]) {
 	if n == nil {
 		return
 	}
@@ -413,7 +418,7 @@ func (t *fixed[T]) delete(n *node[T]) {
 	n.nRight = 0
 }
 
-func (t *fixed[T]) rebalanceForDelete(n *node[T]) {
+func (t *FixedWindow[T]) rebalanceForDelete(n *node[T]) {
 	p := n.parent
 	// Case 1
 	if p == nil {

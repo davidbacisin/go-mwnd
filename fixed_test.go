@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func makeFixed(values ...int) *fixed[int] {
+func makeFixed(values ...int) *FixedWindow[int] {
 	tr := Fixed[int](len(values))
 	for _, v := range values {
 		tr.Put(v)
@@ -72,7 +72,7 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (total in
 	return total, leftBlack, ok
 }
 
-func assertRedBlackProperties[T Numeric](t *testing.T, tr *fixed[T]) bool {
+func assertRedBlackProperties[T Numeric](t *testing.T, tr *FixedWindow[T]) bool {
 	_, _, ok := assertRedBlackPropertiesNode(t, tr.root)
 	return ok
 }
