@@ -2,7 +2,7 @@ package mwnd
 
 import "math"
 
-// FixedWindow aggregates a FixedWindow number of values. Once the capacity is reached, each new value causes
+// FixedWindow aggregates a fixed number of values. Once the capacity is reached, each new value causes
 // the oldest value to be evicted from the window.
 //
 // The worst-case time complexity of adding a new value to the window is O(log n), where n is the capacity
