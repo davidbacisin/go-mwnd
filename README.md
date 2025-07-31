@@ -25,7 +25,7 @@ fmt.Printf("Variance: %.2f\n", w.Variance())
 fmt.Printf("Median: %d\n", w.Quantile(0.5))
 ```
 
-## Example visualization 📊
+## Example visualizations 📊
 The following plot shows generated data (solid purple line) and the moving min, max, mean, and variance 
 for a fixed window of 500 values:
 ![plot of a composite sine wave and its fixed moving window statistics](internal/examples/fixed/plot.png)

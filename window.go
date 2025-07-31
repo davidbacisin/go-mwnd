@@ -1,6 +1,6 @@
 package mwnd
 
-type Window[T Numeric] interface {
+type window[T Numeric] interface {
 	Size() int
 	Put(T)
 	Min() T
