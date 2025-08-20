@@ -47,3 +47,21 @@ to synchronize access under a concurrent workload.
 - **Random sampling**: In some cases, it may be impractical to include every value 
 in the window. Instead, a random subset could be probabilistically sampled. The variance 
 calculation would need to be corrected for bias.
+
+## Benchmarks
+Last updated 2025-08-20 from a run in Github Actions.
+```
+goos: linux
+goarch: amd64
+pkg: github.com/davidbacisin/go-mwnd
+cpu: AMD EPYC 7763 64-Core Processor                
+BenchmarkExponential-4                           	88175295    13.67 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000-4                           	 6180193    194.0 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000_Quantiles/first_percentile-4 	 6031942    199.1 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000_Quantiles/first_decile-4     	 5875854    204.3 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000_Quantiles/first_quartile-4   	 5807490    206.5 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000_Quantiles/median-4           	 5755824    209.0 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000_Quantiles/third_quartile-4   	 5788407    207.5 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000_Quantiles/ninth_decile-4     	 5815921    206.1 ns/op    0 B/op    0 allocs/op
+BenchmarkFixed_1000_Quantiles/99th_percentile-4  	 5896506    200.7 ns/op    0 B/op    0 allocs/op
+```
