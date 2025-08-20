@@ -30,7 +30,7 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (total in
 	)
 
 	if n.left != nil {
-		ok = ok && assertLess(t, n.left.value, n.value, "left child should have a lesser value than parent")
+		ok = ok && assertLessOrEqual(t, n.left.value, n.value, "left child should have a lesser or equal value to parent")
 
 		leftTotal, leftBlack, leftOk = assertRedBlackPropertiesNode(t, n.left)
 		total += leftTotal
@@ -41,9 +41,7 @@ func assertRedBlackPropertiesNode[T Numeric](t *testing.T, n *node[T]) (total in
 	}
 
 	if n.right != nil {
-		if n.value != n.right.value {
-			ok = ok && assertLess(t, n.value, n.right.value, "right child should have a greater or equal value to parent")
-		}
+		ok = ok && assertLessOrEqual(t, n.value, n.right.value, "right child should have a greater or equal value to parent")
 
 		rightTotal, rightBlack, rightOk = assertRedBlackPropertiesNode(t, n.right)
 		total += rightTotal
@@ -149,6 +147,15 @@ func Test_fixed_Insert(t *testing.T) {
 		assertEqual(t, 1, tr.root.left.left.right.value, "should insert duplicates to the right")
 
 		assertEqual(t, 11, tr.Size(), "should reach its capacity")
+	})
+
+	t.Run("many duplicates", func(t *testing.T) {
+		const size = 100
+		tr := Fixed[int](size)
+		for range size {
+			tr.Put(1)
+			assertRedBlackProperties(t, tr)
+		}
 	})
 
 	t.Run("random", func(t *testing.T) {
@@ -712,6 +719,21 @@ func Test_fixed_Quantile(t *testing.T) {
 		assertEqual(t, 0, tr.Quantile(0.1))
 		assertEqual(t, 5, tr.Quantile(0.5))
 		assertEqual(t, 10, tr.Quantile(0.9))
+	})
+
+	t.Run("many duplicates", func(t *testing.T) {
+		tr := makeFixed(2, 2, 2, 2, 2, 2, 2, 2, 2)
+		assertEqual(t, 2, tr.Quantile(0.1))
+		assertEqual(t, 2, tr.Quantile(0.5))
+		assertEqual(t, 2, tr.Quantile(0.9))
+		tr.Put(1)
+		assertEqual(t, 1, tr.Quantile(0.1))
+		assertEqual(t, 2, tr.Quantile(0.5))
+		assertEqual(t, 2, tr.Quantile(0.9))
+		tr.Put(3)
+		assertEqual(t, 1, tr.Quantile(0.1))
+		assertEqual(t, 2, tr.Quantile(0.5))
+		assertEqual(t, 3, tr.Quantile(0.9))
 	})
 
 	t.Run("rolling 50 nodes random", func(t *testing.T) {
