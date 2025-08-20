@@ -1,4 +1,4 @@
-name: ci
+name: benchmark
 
 on: workflow_dispatch
 
@@ -19,5 +19,5 @@ jobs:
           check-latest: true
           cache-dependency-path: "**/go.sum"
       - name: Run benchmarks
-        run: go test -run=^$ -bench -benchmem ./...
+        run: go test -run=^$ -bench=. -benchmem ./...
             
