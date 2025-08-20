@@ -49,7 +49,11 @@ func assertNil(t *testing.T, actual any, msg ...string) bool {
 	return false
 }
 
-func assertLess[T cmp.Ordered](t *testing.T, a, b T, msg ...string) bool {
+func assertLessOrEqual[T cmp.Ordered](t *testing.T, a, b T, msg ...string) bool {
+	if a == b {
+		return true
+	}
+
 	ok := cmp.Less(a, b)
 	if !ok {
 		printCaller(t)
